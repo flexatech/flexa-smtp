@@ -28,9 +28,8 @@ final class Router {
 		( new LogsEndpoint() )->register_routes();
 		( new OAuthEndpoint() )->register_routes();
 		( new TrackingEndpoint() )->register_routes();
-
-		// WP7+ endpoints register here as each work package lands, e.g.:
-		// ( new ReportsEndpoint() )->register_routes();
+		( new ResetEndpoint() )->register_routes();
+		( new ReportsEndpoint() )->register_routes();
 
 		do_action( 'flexa_smtp.rest.register_routes' );
 	}

@@ -51,8 +51,24 @@ final class Plugin {
 			Tracking\Tracker::instance()->register();
 		}
 
-		// WP7+ services (Admin\Menu, Admin\Enqueue, Reports\Scheduler, …) register
-		// here behind class_exists() guards as each work package lands.
+		if ( class_exists( Reports\Scheduler::class ) ) {
+			Reports\Scheduler::instance()->register();
+		}
+
+		if ( is_admin() ) {
+			if ( class_exists( Admin\Menu::class ) ) {
+				Admin\Menu::instance()->register();
+			}
+			if ( class_exists( Admin\Enqueue::class ) ) {
+				Admin\Enqueue::instance()->register();
+			}
+			if ( class_exists( Admin\DashboardWidget::class ) ) {
+				Admin\DashboardWidget::instance()->register();
+			}
+		}
+
+		// WP7+ services (Reports\Scheduler, …) register here behind
+		// class_exists() guards as each work package lands.
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			if ( class_exists( Cli\LogsCommand::class ) ) {

@@ -6,7 +6,7 @@
 /assets/dist/
 
 # Dev-mode marker: forces Enqueue to load from the Vite dev server
-/client/.dev
+/apps/admin/.dev
 
 # Transient makepot shim (emitted then deleted by makepot.sh)
 /i18n/extracted-strings.js
@@ -21,7 +21,7 @@
 .phpcs.cache
 /.phpstan/
 *.tsbuildinfo
-/client/node_modules/
+/apps/admin/node_modules/
 .vite/
 
 # Environment / secrets

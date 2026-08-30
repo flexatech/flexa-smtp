@@ -100,4 +100,69 @@ final class ClickEventRepository {
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; log_id bound.
 		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(count),0) FROM {$table} WHERE log_id = %d", $log_id ) );
 	}
+
+	/**
+	 * Total clicks and distinct messages clicked for emails sent in a date range
+	 * (bucketed by the log's send date). WP7 reports.
+	 *
+	 * @return array{clicks:int, messages:int}
+	 */
+	public function stats_in_range( string $from, string $to ): array {
+		global $wpdb;
+
+		$click = $this->table();
+		$logs  = $wpdb->prefix . 'flexa_smtp_email_logs';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only; range bound.
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT COALESCE(SUM(c.count),0) AS clicks, COUNT(DISTINCT c.log_id) AS messages FROM {$click} c INNER JOIN {$logs} l ON l.id = c.log_id WHERE l.flag_delete = 0 AND l.date_time BETWEEN %s AND %s", $from, $to ), ARRAY_A );
+
+		return [
+			'clicks'   => (int) ( $row['clicks'] ?? 0 ),
+			'messages' => (int) ( $row['messages'] ?? 0 ),
+		];
+	}
+
+	/**
+	 * Clicks per day (by the log's send date), keyed by Y-m-d. WP7 chart series.
+	 *
+	 * @return array<string, int>
+	 */
+	public function daily_clicks( string $from, string $to ): array {
+		global $wpdb;
+
+		$click = $this->table();
+		$logs  = $wpdb->prefix . 'flexa_smtp_email_logs';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only; range bound.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE(l.date_time) AS d, COALESCE(SUM(c.count),0) AS clicks FROM {$click} c INNER JOIN {$logs} l ON l.id = c.log_id WHERE l.flag_delete = 0 AND l.date_time BETWEEN %s AND %s GROUP BY d", $from, $to ), ARRAY_A );
+
+		$out = [];
+		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+			$out[ (string) ( $row['d'] ?? '' ) ] = (int) ( $row['clicks'] ?? 0 );
+		}
+		unset( $out[''] );
+
+		return $out;
+	}
+
+	/**
+	 * Most-clicked URLs for emails sent in a range, busiest first. WP7 reports.
+	 *
+	 * @return list<array{url:string, clicks:int}>
+	 */
+	public function top_urls( string $from, string $to, int $limit = 5 ): array {
+		global $wpdb;
+
+		$click = $this->table();
+		$logs  = $wpdb->prefix . 'flexa_smtp_email_logs';
+		$limit = max( 1, min( 50, $limit ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only; values bound.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT c.url, COALESCE(SUM(c.count),0) AS clicks FROM {$click} c INNER JOIN {$logs} l ON l.id = c.log_id WHERE l.flag_delete = 0 AND l.date_time BETWEEN %s AND %s GROUP BY c.url ORDER BY clicks DESC LIMIT %d", $from, $to, $limit ), ARRAY_A );
+
+		return array_map(
+			static fn ( array $row ): array => [
+				'url'    => (string) ( $row['url'] ?? '' ),
+				'clicks' => (int) ( $row['clicks'] ?? 0 ),
+			],
+			is_array( $rows ) ? $rows : []
+		);
+	}
 }

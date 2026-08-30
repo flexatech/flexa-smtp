@@ -177,6 +177,86 @@ final class EmailLogRepository {
 	}
 
 	/**
+	 * Sent/failed counts for logs in a date range (WP7 reports). Pending rows
+	 * are excluded from both.
+	 *
+	 * @return array{sent:int, failed:int, total:int}
+	 */
+	public function status_counts( string $from, string $to ): array {
+		global $wpdb;
+
+		$table = $this->table();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; range bound.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT status, COUNT(*) AS c FROM {$table} WHERE flag_delete = 0 AND date_time BETWEEN %s AND %s GROUP BY status", $from, $to ), ARRAY_A );
+
+		$sent   = 0;
+		$failed = 0;
+		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+			$status = (int) ( $row['status'] ?? -1 );
+			$count  = (int) ( $row['c'] ?? 0 );
+			if ( EmailLog::STATUS_SENT === $status ) {
+				$sent = $count;
+			} elseif ( EmailLog::STATUS_FAILED === $status ) {
+				$failed = $count;
+			}
+		}
+
+		return [ 'sent' => $sent, 'failed' => $failed, 'total' => $sent + $failed ];
+	}
+
+	/**
+	 * Per-day sent/failed counts, keyed by Y-m-d (WP7 chart series).
+	 *
+	 * @return array<string, array{sent:int, failed:int}>
+	 */
+	public function daily_status( string $from, string $to ): array {
+		global $wpdb;
+
+		$table = $this->table();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; range bound.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE(date_time) AS d, status, COUNT(*) AS c FROM {$table} WHERE flag_delete = 0 AND date_time BETWEEN %s AND %s GROUP BY d, status", $from, $to ), ARRAY_A );
+
+		$out = [];
+		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+			$day = (string) ( $row['d'] ?? '' );
+			if ( '' === $day ) {
+				continue;
+			}
+			$out[ $day ] ??= [ 'sent' => 0, 'failed' => 0 ];
+			$count = (int) ( $row['c'] ?? 0 );
+			if ( EmailLog::STATUS_SENT === (int) ( $row['status'] ?? -1 ) ) {
+				$out[ $day ]['sent'] = $count;
+			} elseif ( EmailLog::STATUS_FAILED === (int) ( $row['status'] ?? -1 ) ) {
+				$out[ $day ]['failed'] = $count;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Sent-count breakdown by mailer for a range, busiest first.
+	 *
+	 * @return list<array{mailer:string, count:int}>
+	 */
+	public function mailer_breakdown( string $from, string $to, int $limit = 10 ): array {
+		global $wpdb;
+
+		$table = $this->table();
+		$limit = max( 1, min( 50, $limit ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; values bound.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT mailer, COUNT(*) AS c FROM {$table} WHERE flag_delete = 0 AND status = %d AND date_time BETWEEN %s AND %s GROUP BY mailer ORDER BY c DESC LIMIT %d", EmailLog::STATUS_SENT, $from, $to, $limit ), ARRAY_A );
+
+		return array_map(
+			static fn ( array $row ): array => [
+				'mailer' => (string) ( $row['mailer'] ?? '' ),
+				'count'  => (int) ( $row['c'] ?? 0 ),
+			],
+			is_array( $rows ) ? $rows : []
+		);
+	}
+
+	/**
 	 * Hard-delete rows by id. Returns the number of rows removed.
 	 *
 	 * @param list<int> $ids

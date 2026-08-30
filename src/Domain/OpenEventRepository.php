@@ -72,4 +72,46 @@ final class OpenEventRepository {
 
 		return $event instanceof OpenEvent ? $event->count : 0;
 	}
+
+	/**
+	 * Total opens and distinct messages opened for emails sent in a date range
+	 * (bucketed by the log's send date). WP7 reports.
+	 *
+	 * @return array{opens:int, messages:int}
+	 */
+	public function stats_in_range( string $from, string $to ): array {
+		global $wpdb;
+
+		$open = $this->table();
+		$logs = $wpdb->prefix . 'flexa_smtp_email_logs';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only; range bound.
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT COALESCE(SUM(o.count),0) AS opens, COUNT(DISTINCT o.log_id) AS messages FROM {$open} o INNER JOIN {$logs} l ON l.id = o.log_id WHERE l.flag_delete = 0 AND l.date_time BETWEEN %s AND %s", $from, $to ), ARRAY_A );
+
+		return [
+			'opens'    => (int) ( $row['opens'] ?? 0 ),
+			'messages' => (int) ( $row['messages'] ?? 0 ),
+		];
+	}
+
+	/**
+	 * Opens per day (by the log's send date), keyed by Y-m-d. WP7 chart series.
+	 *
+	 * @return array<string, int>
+	 */
+	public function daily_opens( string $from, string $to ): array {
+		global $wpdb;
+
+		$open = $this->table();
+		$logs = $wpdb->prefix . 'flexa_smtp_email_logs';
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only; range bound.
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE(l.date_time) AS d, COALESCE(SUM(o.count),0) AS opens FROM {$open} o INNER JOIN {$logs} l ON l.id = o.log_id WHERE l.flag_delete = 0 AND l.date_time BETWEEN %s AND %s GROUP BY d", $from, $to ), ARRAY_A );
+
+		$out = [];
+		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
+			$out[ (string) ( $row['d'] ?? '' ) ] = (int) ( $row['opens'] ?? 0 );
+		}
+		unset( $out[''] );
+
+		return $out;
+	}
 }

@@ -22,6 +22,9 @@ export interface SettingsData {
     log_retention_days: number;
     enable_open_tracking: boolean;
     enable_click_tracking: boolean;
+    enable_weekly_report: boolean;
+    enable_monthly_report: boolean;
+    report_recipients: string;
     mailers: Record<string, MailerValues>;
 }
 

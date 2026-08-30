@@ -40,6 +40,8 @@ final class Settings {
 		'enable_email_log',
 		'enable_open_tracking',
 		'enable_click_tracking',
+		'enable_weekly_report',
+		'enable_monthly_report',
 	];
 
 	/**
@@ -50,6 +52,7 @@ final class Settings {
 		'from_email',
 		'from_name',
 		'fallback_mailer',
+		'report_recipients',
 	];
 
 	/**
@@ -262,6 +265,9 @@ final class Settings {
 		}
 		if ( array_key_exists( 'from_name', $incoming ) ) {
 			$clean['from_name'] = is_string( $incoming['from_name'] ) ? sanitize_text_field( $incoming['from_name'] ) : '';
+		}
+		if ( array_key_exists( 'report_recipients', $incoming ) ) {
+			$clean['report_recipients'] = is_string( $incoming['report_recipients'] ) ? sanitize_text_field( $incoming['report_recipients'] ) : '';
 		}
 
 		foreach ( self::INT_KEYS as $key ) {
