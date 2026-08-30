@@ -1,0 +1,44 @@
+/.git
+/.github
+/.gitignore
+/.gitattributes
+/.editorconfig
+/.distignore
+/.claude
+/.idea
+/.vscode
+/.DS_Store
+/node_modules
+/client
+/tests
+/docs
+/release.sh
+/makepot.sh
+/composer.json
+/composer.lock
+/pnpm-lock.yaml
+/package-lock.json
+/yarn.lock
+/package.json
+/pnpm-workspace.yaml
+/tsconfig.json
+/phpcs.xml.dist
+/phpstan.neon
+/phpstan-bootstrap.php
+/phpunit.xml
+/scripts
+/stubs
+/i18n/extracted-strings.js
+/.eslintrc*
+/.prettierrc*
+# No markdown ships in a production build (WordPress reads readme.txt); this
+# also keeps stray dev notes (plan, session logs) out of the zip so Plugin
+# Check's root-markdown scan stays clean.
+*.md
+# Regeneratable tooling caches (hidden files Plugin Check rejects).
+.phpunit.result.cache
+.phpcs.cache
+**/*.map
+**/*.log
+**/.DS_Store
+**/.gitkeep

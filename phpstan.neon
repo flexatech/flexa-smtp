@@ -1,0 +1,24 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+    level: 6
+    # Runtime floor is PHP 8.2, but flexa-smtp.php carries a version_compare()
+    # guard that shows an admin notice on older PHP. Pin a range (not a single
+    # version) so the analyser doesn't fold that guard to "always false" — it is
+    # live code for sub-8.2 hosts.
+    phpVersion:
+        min: 80100
+        max: 80400
+    paths:
+        - src
+        - flexa-smtp.php
+        - uninstall.php
+    excludePaths:
+        - vendor
+        - node_modules
+        - assets/dist (?)
+    bootstrapFiles:
+        - vendor/szepeviktor/phpstan-wordpress/bootstrap.php
+        - vendor/php-stubs/wp-cli-stubs/wp-cli-stubs.php
+        - phpstan-bootstrap.php
