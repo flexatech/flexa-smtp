@@ -23,7 +23,10 @@ final class SendPulseMailer extends AbstractApiMailer {
 	public static function credential_schema(): array {
 		return [
 			'client_id'     => [ 'type' => 'string' ],
-			'client_secret' => [ 'type' => 'string', 'secret' => true ],
+			'client_secret' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 		];
 	}
 
@@ -45,9 +48,11 @@ final class SendPulseMailer extends AbstractApiMailer {
 
 		$email = [
 			'subject' => $message->subject,
-			'from'    => array_filter(
-				[ 'name' => $from['name'], 'email' => $from['email'] ],
-				static fn ( string $v ): bool => '' !== $v
+			'from'    => $this->compact_pairs(
+				[
+					'name'  => $from['name'],
+					'email' => $from['email'],
+				]
 			),
 			'to'      => $this->map_emails( $message->to ),
 		];
@@ -99,17 +104,29 @@ final class SendPulseMailer extends AbstractApiMailer {
 		);
 	}
 
+	/**
+	 * Response metadata shared by every Result this transport returns.
+	 *
+	 * @return array{mailer:string, code:int}
+	 */
+	private function result_meta( int $code ): array {
+		return [
+			'mailer' => $this->slug(),
+			'code'   => $code,
+		];
+	}
+
 	protected function interpret( int $code, string $raw ): Result {
 		if ( $code >= 200 && $code < 300 ) {
 			$data = json_decode( $raw, true );
 			if ( is_array( $data ) && array_key_exists( 'result', $data ) && false === $data['result'] ) {
-				return Result::error( $this->extract_error( $raw, $code ), [ 'mailer' => $this->slug(), 'code' => $code ] );
+				return Result::error( $this->extract_error( $raw, $code ), $this->result_meta( $code ) );
 			}
 
-			return Result::success( [ 'mailer' => $this->slug(), 'code' => $code ] );
+			return Result::success( $this->result_meta( $code ) );
 		}
 
-		return Result::error( $this->extract_error( $raw, $code ), [ 'mailer' => $this->slug(), 'code' => $code ] );
+		return Result::error( $this->extract_error( $raw, $code ), $this->result_meta( $code ) );
 	}
 
 	/**

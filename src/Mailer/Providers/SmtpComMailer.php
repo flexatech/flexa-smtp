@@ -17,7 +17,10 @@ final class SmtpComMailer extends AbstractApiMailer {
 
 	public static function credential_schema(): array {
 		return [
-			'api_key' => [ 'type' => 'string', 'secret' => true ],
+			'api_key' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 			'channel' => [ 'type' => 'string' ],
 		];
 	}
@@ -38,15 +41,24 @@ final class SmtpComMailer extends AbstractApiMailer {
 		$from = $this->from( $message );
 
 		$body_part = $this->is_html( $message )
-			? [ 'type' => 'text/html', 'content' => $message->body ]
-			: [ 'type' => 'text/plain', 'content' => $message->body ];
+			? [
+				'type'    => 'text/html',
+				'content' => $message->body,
+			]
+			: [
+				'type'    => 'text/plain',
+				'content' => $message->body,
+			];
 
 		$payload = [
 			'channel'    => $this->cred( 'channel' ),
 			'recipients' => [
 				'to' => array_map(
 					static fn ( array $r ): array => array_filter(
-						[ 'address' => (string) $r['address'], 'name' => (string) $r['name'] ],
+						[
+							'address' => (string) $r['address'],
+							'name'    => (string) $r['name'],
+						],
 						static fn ( string $v ): bool => '' !== $v
 					),
 					$message->to
@@ -54,7 +66,10 @@ final class SmtpComMailer extends AbstractApiMailer {
 			],
 			'originator' => [
 				'from' => array_filter(
-					[ 'address' => $from['email'], 'name' => $from['name'] ],
+					[
+						'address' => $from['email'],
+						'name'    => $from['name'],
+					],
 					static fn ( string $v ): bool => '' !== $v
 				),
 			],

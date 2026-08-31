@@ -93,7 +93,7 @@ final class GmailMailer extends AbstractOAuthMailer {
 		$from = $this->from( $message );
 		$to   = $this->map_addresses( $message->to );
 
-		$lines = [];
+		$lines   = [];
 		$lines[] = 'From: ' . ( '' !== $from['name'] ? sprintf( '%s <%s>', $from['name'], $from['email'] ) : $from['email'] );
 		$lines[] = 'To: ' . implode( ', ', $to );
 

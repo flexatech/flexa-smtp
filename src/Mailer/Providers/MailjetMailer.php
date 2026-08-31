@@ -17,7 +17,10 @@ final class MailjetMailer extends AbstractApiMailer {
 	public static function credential_schema(): array {
 		return [
 			'api_key'    => [ 'type' => 'string' ],
-			'secret_key' => [ 'type' => 'string', 'secret' => true ],
+			'secret_key' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 		];
 	}
 
@@ -39,9 +42,11 @@ final class MailjetMailer extends AbstractApiMailer {
 		$from = $this->from( $message );
 
 		$msg = [
-			'From'    => array_filter(
-				[ 'Email' => $from['email'], 'Name' => $from['name'] ],
-				static fn ( string $v ): bool => '' !== $v
+			'From'    => $this->compact_pairs(
+				[
+					'Email' => $from['email'],
+					'Name'  => $from['name'],
+				]
 			),
 			'To'      => $this->mailjet_recipients( $message->to ),
 			'Subject' => $message->subject,
@@ -68,9 +73,11 @@ final class MailjetMailer extends AbstractApiMailer {
 
 		$reply = $this->reply_to( $message );
 		if ( '' !== $reply['email'] ) {
-			$msg['ReplyTo'] = array_filter(
-				[ 'Email' => $reply['email'], 'Name' => $reply['name'] ],
-				static fn ( string $v ): bool => '' !== $v
+			$msg['ReplyTo'] = $this->compact_pairs(
+				[
+					'Email' => $reply['email'],
+					'Name'  => $reply['name'],
+				]
 			);
 		}
 
@@ -96,7 +103,10 @@ final class MailjetMailer extends AbstractApiMailer {
 	private function mailjet_recipients( array $list ): array {
 		$out = [];
 		foreach ( $list as $row ) {
-			$out[] = [ 'Email' => (string) $row['address'], 'Name' => (string) $row['name'] ];
+			$out[] = [
+				'Email' => (string) $row['address'],
+				'Name'  => (string) $row['name'],
+			];
 		}
 
 		return $out;

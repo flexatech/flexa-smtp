@@ -35,7 +35,7 @@ final class EmailLogRepository {
 	 * @param array{
 	 *   subject?:string, email_from?:string, email_to?:list<array{address:string,name:string}>|string,
 	 *   mailer?:string, status?:int, content_type?:string, body_content?:string,
-	 *   reason_error?:string, source?:string, extra_info?:array<string,mixed>, date_time?:string
+	 *   reason_error?:string, source?:string, extra_info?:mixed, date_time?:string
 	 * } $data
 	 */
 	public function create( array $data ): int {
@@ -73,7 +73,7 @@ final class EmailLogRepository {
 	 * SENT/FAILED outcome once the transport reports back. Only the keys present
 	 * in $data are touched.
 	 *
-	 * @param array{status?:int, mailer?:string, reason_error?:string, body_content?:string, extra_info?:array<string,mixed>} $data
+	 * @param array{status?:int, mailer?:string, reason_error?:string, body_content?:string, extra_info?:mixed} $data
 	 */
 	public function update( int $id, array $data ): bool {
 		global $wpdb;
@@ -201,7 +201,11 @@ final class EmailLogRepository {
 			}
 		}
 
-		return [ 'sent' => $sent, 'failed' => $failed, 'total' => $sent + $failed ];
+		return [
+			'sent'   => $sent,
+			'failed' => $failed,
+			'total'  => $sent + $failed,
+		];
 	}
 
 	/**
@@ -222,8 +226,11 @@ final class EmailLogRepository {
 			if ( '' === $day ) {
 				continue;
 			}
-			$out[ $day ] ??= [ 'sent' => 0, 'failed' => 0 ];
-			$count = (int) ( $row['c'] ?? 0 );
+			$out[ $day ] ??= [
+				'sent'   => 0,
+				'failed' => 0,
+			];
+			$count         = (int) ( $row['c'] ?? 0 );
 			if ( EmailLog::STATUS_SENT === (int) ( $row['status'] ?? -1 ) ) {
 				$out[ $day ]['sent'] = $count;
 			} elseif ( EmailLog::STATUS_FAILED === (int) ( $row['status'] ?? -1 ) ) {
@@ -310,7 +317,7 @@ final class EmailLogRepository {
 		$clauses = [ 'flag_delete = 0' ];
 		$params  = [];
 
-		if ( isset( $args['status'] ) && '' !== $args['status'] && null !== $args['status'] ) {
+		if ( isset( $args['status'] ) && '' !== $args['status'] ) {
 			$clauses[] = 'status = %d';
 			$params[]  = (int) $args['status'];
 		}

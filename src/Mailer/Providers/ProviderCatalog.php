@@ -55,10 +55,10 @@ final class ProviderCatalog {
 	 * @return array<string, array<string, array{type:string, secret?:bool, enum?:list<string>}>>
 	 */
 	public function add_schema( array $schema ): array {
+		// Every provider in PROVIDERS implements ProvidesCredentialSchema; phpstan
+		// enforces that contract at analysis time, so no runtime guard is needed.
 		foreach ( self::PROVIDERS as $slug => $class ) {
-			if ( is_a( $class, ProvidesCredentialSchema::class, true ) ) {
-				$schema[ $slug ] = $class::credential_schema();
-			}
+			$schema[ $slug ] = $class::credential_schema();
 		}
 
 		return $schema;

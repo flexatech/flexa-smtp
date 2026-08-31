@@ -85,7 +85,7 @@ final class MailLogger {
 				'extra_info'   => $snapshot['extra'],
 			]
 		);
-		$this->pending = $snapshot;
+		$this->pending  = $snapshot;
 
 		if ( (int) $snapshot['id'] > 0 ) {
 			/**
@@ -102,10 +102,10 @@ final class MailLogger {
 	}
 
 	/**
-	 * @param mixed                $php
-	 * @param string               $slug
-	 * @param string               $error
-	 * @param array<string, mixed> $meta
+	 * @param mixed $php
+	 * @param mixed $slug
+	 * @param mixed $error
+	 * @param mixed $meta
 	 */
 	public function on_failed( $php, $slug, $error, $meta ): void {
 		unset( $php, $meta );
@@ -121,9 +121,9 @@ final class MailLogger {
 	}
 
 	/**
-	 * @param mixed                $php
-	 * @param string               $slug
-	 * @param array<string, mixed> $meta
+	 * @param mixed $php
+	 * @param mixed $slug
+	 * @param mixed $meta
 	 */
 	public function on_sent( $php, $slug, $meta ): void {
 		unset( $php );
@@ -228,7 +228,7 @@ final class MailLogger {
 	}
 
 	/**
-	 * @param array<int, array<int, string>> $addresses PHPMailer [ [address, name], ... ]
+	 * @param array<int, mixed> $addresses PHPMailer [ [address, name], ... ]
 	 * @return list<array{address:string, name:string}>
 	 */
 	private function map_addresses( array $addresses ): array {

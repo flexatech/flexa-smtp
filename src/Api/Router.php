@@ -30,6 +30,7 @@ final class Router {
 		( new TrackingEndpoint() )->register_routes();
 		( new ResetEndpoint() )->register_routes();
 		( new ReportsEndpoint() )->register_routes();
+		( new ImportEndpoint() )->register_routes();
 
 		do_action( 'flexa_smtp.rest.register_routes' );
 	}

@@ -1,0 +1,758 @@
+# Copyright (C) 2026 FlexaTech
+# This file is distributed under the GPL v2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Flexa SMTP 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/flexa-smtp\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-08-30T23:55:56+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.10.0\n"
+"X-Domain: flexa-smtp\n"
+
+#. Plugin Name of the plugin
+#: flexa-smtp.php
+#: src/Admin/Menu.php:43
+#: src/Admin/Menu.php:44
+#: i18n/extracted-strings.js:45
+msgid "Flexa SMTP"
+msgstr ""
+
+#. Description of the plugin
+#: flexa-smtp.php
+msgid "WP Mail SMTP with email logs, open/click tracking, and reports."
+msgstr ""
+
+#. Author of the plugin
+#: flexa-smtp.php
+msgid "FlexaTech"
+msgstr ""
+
+#: flexa-smtp.php:24
+msgid "Flexa SMTP requires PHP 8.2 or higher. The plugin has been disabled."
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:31
+msgid "Flexa SMTP — Last 30 Days"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:40
+#: src/Reports/Digest.php:76
+#: i18n/extracted-strings.js:73
+#: i18n/extracted-strings.js:91
+#: i18n/extracted-strings.js:133
+#: i18n/extracted-strings.js:136
+msgid "Sent"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:41
+#: src/Reports/Digest.php:77
+#: i18n/extracted-strings.js:72
+#: i18n/extracted-strings.js:92
+#: i18n/extracted-strings.js:137
+msgid "Failed"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:42
+#: src/Reports/Digest.php:78
+#: i18n/extracted-strings.js:134
+#: i18n/extracted-strings.js:138
+msgid "Opens"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:43
+#: src/Reports/Digest.php:79
+#: i18n/extracted-strings.js:135
+#: i18n/extracted-strings.js:139
+msgid "Clicks"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:44
+#: src/Reports/Digest.php:80
+#: i18n/extracted-strings.js:140
+msgid "Open rate"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:45
+#: src/Reports/Digest.php:81
+#: i18n/extracted-strings.js:141
+msgid "Click rate"
+msgstr ""
+
+#: src/Admin/DashboardWidget.php:61
+msgid "View full reports →"
+msgstr ""
+
+#: src/Admin/ImportNotice.php:64
+msgid "Flexa SMTP: import your existing configuration"
+msgstr ""
+
+#. translators: %s: comma-separated list of detected plugin names.
+#: src/Admin/ImportNotice.php:68
+msgid "We detected settings from: %s. You can import them (and their email logs) into Flexa SMTP."
+msgstr ""
+
+#: src/Admin/ImportNotice.php:73
+msgid "Go to Import"
+msgstr ""
+
+#: src/Admin/ImportNotice.php:75
+msgid "Dismiss"
+msgstr ""
+
+#: src/Admin/Menu.php:33
+#: i18n/extracted-strings.js:47
+msgid "Settings"
+msgstr ""
+
+#: src/Api/Endpoint.php:27
+msgid "You do not have permission to perform this action."
+msgstr ""
+
+#: src/Api/Endpoint.php:39
+msgid "You do not have permission to update settings."
+msgstr ""
+
+#: src/Api/ImportEndpoint.php:88
+msgid "No importable data was found for the selected plugin."
+msgstr ""
+
+#: src/Api/LogsEndpoint.php:106
+msgid "Log entry not found."
+msgstr ""
+
+#: src/Api/OAuthEndpoint.php:181
+msgid "The OAuth state could not be verified."
+msgstr ""
+
+#. translators: %s: mailer slug.
+#: src/Api/OAuthEndpoint.php:207
+msgid "\"%s\" is not an OAuth mailer."
+msgstr ""
+
+#: src/Api/ReportsEndpoint.php:72
+msgid "test"
+msgstr ""
+
+#: src/Api/TestMailEndpoint.php:59
+msgid "A valid recipient email address is required."
+msgstr ""
+
+#. translators: %s: site name.
+#: src/Api/TestMailEndpoint.php:69
+msgid "Flexa SMTP test email from %s"
+msgstr ""
+
+#: src/Api/TestMailEndpoint.php:76
+#: src/Api/TestMailEndpoint.php:77
+msgid "This is a Flexa SMTP test email. If you received it, your mailer is configured correctly."
+msgstr ""
+
+#: src/Api/TestMailEndpoint.php:100
+msgid "The test email could not be sent."
+msgstr ""
+
+#: src/Api/TrackingEndpoint.php:130
+msgid "Invalid tracking token."
+msgstr ""
+
+#: src/Logging/MailLogger.php:170
+msgid "The message could not be sent."
+msgstr ""
+
+#. translators: 1: site name, 2: period label e.g. "weekly".
+#: src/Reports/Digest.php:32
+msgid "[%1$s] Your %2$s email report"
+msgstr ""
+
+#. translators: 1: period label, 2: from date, 3: to date.
+#: src/Reports/Digest.php:104
+msgid "Your %1$s email report (%2$s – %3$s)"
+msgstr ""
+
+#: src/Reports/Digest.php:119
+#: i18n/extracted-strings.js:145
+msgid "Top links"
+msgstr ""
+
+#: src/Reports/Scheduler.php:43
+msgid "Once Monthly (Flexa SMTP)"
+msgstr ""
+
+#: src/Reports/Scheduler.php:70
+msgid "weekly"
+msgstr ""
+
+#: src/Reports/Scheduler.php:76
+msgid "monthly"
+msgstr ""
+
+#: templates/admin-app.php:15
+msgid "Flexa SMTP requires JavaScript to be enabled."
+msgstr ""
+
+#: i18n/extracted-strings.js:2
+msgid "All plugin data was removed."
+msgstr ""
+
+#: i18n/extracted-strings.js:3
+msgid "Reset failed: "
+msgstr ""
+
+#: i18n/extracted-strings.js:4
+#: i18n/extracted-strings.js:38
+msgid "Reset all data"
+msgstr ""
+
+#: i18n/extracted-strings.js:5
+msgid "Deletes all settings and drops the email log, open, and click tables. This cannot be undone."
+msgstr ""
+
+#: i18n/extracted-strings.js:6
+#: i18n/extracted-strings.js:12
+msgid "Reset everything"
+msgstr ""
+
+#: i18n/extracted-strings.js:7
+msgid "Reset all Flexa SMTP data?"
+msgstr ""
+
+#: i18n/extracted-strings.js:8
+msgid "This permanently deletes your settings and every logged email. Type RESET to confirm."
+msgstr ""
+
+#: i18n/extracted-strings.js:9
+msgid "Confirmation"
+msgstr ""
+
+#: i18n/extracted-strings.js:10
+msgid "Cancel"
+msgstr ""
+
+#: i18n/extracted-strings.js:11
+msgid "Resetting…"
+msgstr ""
+
+#: i18n/extracted-strings.js:13
+#: i18n/extracted-strings.js:97
+#: i18n/extracted-strings.js:125
+msgid "Mailer"
+msgstr ""
+
+#: i18n/extracted-strings.js:14
+msgid "Sender and delivery service"
+msgstr ""
+
+#: i18n/extracted-strings.js:15
+msgid "Mailer Settings"
+msgstr ""
+
+#: i18n/extracted-strings.js:16
+msgid "Choose how your site sends email and who it's from."
+msgstr ""
+
+#: i18n/extracted-strings.js:17
+#: i18n/extracted-strings.js:19
+msgid "Email Logs"
+msgstr ""
+
+#: i18n/extracted-strings.js:18
+msgid "Every message sent"
+msgstr ""
+
+#: i18n/extracted-strings.js:20
+msgid "Browse, search, and export logged emails."
+msgstr ""
+
+#: i18n/extracted-strings.js:21
+#: i18n/extracted-strings.js:23
+msgid "Tracking"
+msgstr ""
+
+#: i18n/extracted-strings.js:22
+msgid "Opens and clicks"
+msgstr ""
+
+#: i18n/extracted-strings.js:24
+msgid "Measure how recipients engage with your emails."
+msgstr ""
+
+#: i18n/extracted-strings.js:25
+#: i18n/extracted-strings.js:27
+msgid "Reports"
+msgstr ""
+
+#: i18n/extracted-strings.js:26
+msgid "Delivery trends"
+msgstr ""
+
+#: i18n/extracted-strings.js:28
+msgid "Charts and summaries of your email activity."
+msgstr ""
+
+#: i18n/extracted-strings.js:29
+#: i18n/extracted-strings.js:31
+#: i18n/extracted-strings.js:67
+msgid "Import"
+msgstr ""
+
+#: i18n/extracted-strings.js:30
+msgid "From other plugins"
+msgstr ""
+
+#: i18n/extracted-strings.js:32
+msgid "Bring settings and logs over from another SMTP plugin."
+msgstr ""
+
+#: i18n/extracted-strings.js:33
+msgid "Additional"
+msgstr ""
+
+#: i18n/extracted-strings.js:34
+msgid "Developer options"
+msgstr ""
+
+#: i18n/extracted-strings.js:35
+msgid "Additional Settings"
+msgstr ""
+
+#: i18n/extracted-strings.js:36
+msgid "Extra controls for testing and development."
+msgstr ""
+
+#: i18n/extracted-strings.js:37
+#: i18n/extracted-strings.js:39
+msgid "Danger Zone"
+msgstr ""
+
+#: i18n/extracted-strings.js:40
+msgid "Irreversible actions — proceed with care."
+msgstr ""
+
+#: i18n/extracted-strings.js:41
+msgid "Loading settings…"
+msgstr ""
+
+#: i18n/extracted-strings.js:42
+msgid "Failed to load settings:"
+msgstr ""
+
+#: i18n/extracted-strings.js:43
+msgid "Settings saved."
+msgstr ""
+
+#: i18n/extracted-strings.js:44
+#: i18n/extracted-strings.js:50
+msgid "Save failed."
+msgstr ""
+
+#: i18n/extracted-strings.js:46
+msgid "for WordPress"
+msgstr ""
+
+#: i18n/extracted-strings.js:48
+msgid "Configure how WordPress sends, logs, and tracks email."
+msgstr ""
+
+#: i18n/extracted-strings.js:49
+msgid "Saved."
+msgstr ""
+
+#: i18n/extracted-strings.js:51
+msgid "Saving…"
+msgstr ""
+
+#: i18n/extracted-strings.js:52
+msgid "Save Settings"
+msgstr ""
+
+#: i18n/extracted-strings.js:53
+msgid "Pause Email Delivery"
+msgstr ""
+
+#: i18n/extracted-strings.js:54
+msgid "Development mode: stop sending real email. Messages are still logged so you can inspect them."
+msgstr ""
+
+#: i18n/extracted-strings.js:55
+msgid "Settings + logs"
+msgstr ""
+
+#: i18n/extracted-strings.js:56
+msgid "Settings only"
+msgstr ""
+
+#: i18n/extracted-strings.js:57
+msgid "Logs only"
+msgstr ""
+
+#: i18n/extracted-strings.js:58
+msgid "settings imported"
+msgstr ""
+
+#: i18n/extracted-strings.js:59
+msgid "%d log(s) imported"
+msgstr ""
+
+#: i18n/extracted-strings.js:60
+msgid "logs already imported"
+msgstr ""
+
+#: i18n/extracted-strings.js:61
+msgid "nothing to import"
+msgstr ""
+
+#: i18n/extracted-strings.js:62
+msgid "%1$s: %2$s"
+msgstr ""
+
+#: i18n/extracted-strings.js:63
+msgid "Could not import from %s."
+msgstr ""
+
+#: i18n/extracted-strings.js:64
+msgid "Logs already imported once."
+msgstr ""
+
+#: i18n/extracted-strings.js:65
+msgid "What to import"
+msgstr ""
+
+#: i18n/extracted-strings.js:66
+msgid "Importing…"
+msgstr ""
+
+#: i18n/extracted-strings.js:68
+msgid "Migrate your configuration and email logs from another SMTP plugin. Importing settings merges over your current Flexa SMTP settings; secrets are re-encrypted on import."
+msgstr ""
+
+#: i18n/extracted-strings.js:69
+msgid "Detecting other plugins…"
+msgstr ""
+
+#: i18n/extracted-strings.js:70
+msgid "Failed to detect importable plugins."
+msgstr ""
+
+#: i18n/extracted-strings.js:71
+msgid "No other SMTP plugins with importable data were found."
+msgstr ""
+
+#: i18n/extracted-strings.js:74
+msgid "Pending"
+msgstr ""
+
+#: i18n/extracted-strings.js:75
+msgid "Email details"
+msgstr ""
+
+#: i18n/extracted-strings.js:76
+#: i18n/extracted-strings.js:77
+#: i18n/extracted-strings.js:99
+msgid "Loading…"
+msgstr ""
+
+#: i18n/extracted-strings.js:78
+msgid "via"
+msgstr ""
+
+#: i18n/extracted-strings.js:79
+#: i18n/extracted-strings.js:158
+msgid "Recipients"
+msgstr ""
+
+#: i18n/extracted-strings.js:80
+msgid "%d opens"
+msgstr ""
+
+#: i18n/extracted-strings.js:81
+msgid "%d links clicked"
+msgstr ""
+
+#: i18n/extracted-strings.js:82
+msgid "%d×"
+msgstr ""
+
+#: i18n/extracted-strings.js:83
+msgid "Body"
+msgstr ""
+
+#: i18n/extracted-strings.js:84
+msgid "All mailers"
+msgstr ""
+
+#: i18n/extracted-strings.js:85
+msgid "Enable Email Log"
+msgstr ""
+
+#: i18n/extracted-strings.js:86
+msgid "Record every email WordPress sends through this site."
+msgstr ""
+
+#: i18n/extracted-strings.js:87
+msgid "Log Retention (days)"
+msgstr ""
+
+#: i18n/extracted-strings.js:88
+msgid "Automatically delete logs older than this. 0 keeps them forever."
+msgstr ""
+
+#: i18n/extracted-strings.js:89
+msgid "Search subject, from, or to…"
+msgstr ""
+
+#: i18n/extracted-strings.js:90
+msgid "All statuses"
+msgstr ""
+
+#: i18n/extracted-strings.js:93
+msgid "Export CSV"
+msgstr ""
+
+#: i18n/extracted-strings.js:94
+msgid "Status"
+msgstr ""
+
+#: i18n/extracted-strings.js:95
+msgid "Subject"
+msgstr ""
+
+#: i18n/extracted-strings.js:96
+msgid "To"
+msgstr ""
+
+#: i18n/extracted-strings.js:98
+msgid "Date"
+msgstr ""
+
+#: i18n/extracted-strings.js:100
+msgid "No emails logged yet."
+msgstr ""
+
+#: i18n/extracted-strings.js:101
+msgid "View"
+msgstr ""
+
+#: i18n/extracted-strings.js:102
+msgid "%d emails"
+msgstr ""
+
+#: i18n/extracted-strings.js:103
+msgid "Previous"
+msgstr ""
+
+#: i18n/extracted-strings.js:104
+msgid "Page %1$d of %2$d"
+msgstr ""
+
+#: i18n/extracted-strings.js:105
+msgid "Next"
+msgstr ""
+
+#: i18n/extracted-strings.js:106
+msgid "Could not start the connection: "
+msgstr ""
+
+#: i18n/extracted-strings.js:107
+msgid "Disconnected."
+msgstr ""
+
+#: i18n/extracted-strings.js:108
+msgid "Disconnect failed: "
+msgstr ""
+
+#: i18n/extracted-strings.js:109
+msgid "Connection"
+msgstr ""
+
+#: i18n/extracted-strings.js:110
+msgid "This account is connected and ready to send."
+msgstr ""
+
+#: i18n/extracted-strings.js:111
+msgid "Authorize this provider to allow sending mail."
+msgstr ""
+
+#: i18n/extracted-strings.js:112
+msgid "Connected"
+msgstr ""
+
+#: i18n/extracted-strings.js:113
+msgid "Not connected"
+msgstr ""
+
+#: i18n/extracted-strings.js:114
+msgid "Disconnect"
+msgstr ""
+
+#: i18n/extracted-strings.js:115
+msgid "Redirecting…"
+msgstr ""
+
+#: i18n/extracted-strings.js:116
+msgid "Connect"
+msgstr ""
+
+#: i18n/extracted-strings.js:117
+msgid "From Email"
+msgstr ""
+
+#: i18n/extracted-strings.js:118
+msgid "The address outgoing mail is sent from."
+msgstr ""
+
+#: i18n/extracted-strings.js:119
+msgid "Force From Email"
+msgstr ""
+
+#: i18n/extracted-strings.js:120
+msgid "Use the address above even if a plugin sets its own."
+msgstr ""
+
+#: i18n/extracted-strings.js:121
+msgid "From Name"
+msgstr ""
+
+#: i18n/extracted-strings.js:122
+msgid "The sender name shown to recipients."
+msgstr ""
+
+#: i18n/extracted-strings.js:123
+msgid "Force From Name"
+msgstr ""
+
+#: i18n/extracted-strings.js:124
+msgid "Use the name above even if a plugin sets its own."
+msgstr ""
+
+#: i18n/extracted-strings.js:126
+msgid "The service that delivers your email."
+msgstr ""
+
+#: i18n/extracted-strings.js:127
+msgid "Enable Fallback"
+msgstr ""
+
+#: i18n/extracted-strings.js:128
+msgid "Try a second mailer if the primary one fails."
+msgstr ""
+
+#: i18n/extracted-strings.js:129
+msgid "Fallback Mailer"
+msgstr ""
+
+#: i18n/extracted-strings.js:130
+msgid "Used only when the primary fails."
+msgstr ""
+
+#: i18n/extracted-strings.js:131
+msgid "— None —"
+msgstr ""
+
+#: i18n/extracted-strings.js:132
+msgid "Daily email activity"
+msgstr ""
+
+#: i18n/extracted-strings.js:142
+msgid "Daily activity"
+msgstr ""
+
+#: i18n/extracted-strings.js:143
+msgid "By mailer"
+msgstr ""
+
+#: i18n/extracted-strings.js:144
+msgid "No sends in this period."
+msgstr ""
+
+#: i18n/extracted-strings.js:146
+msgid "No clicks in this period."
+msgstr ""
+
+#: i18n/extracted-strings.js:147
+msgid "Test digest sent to %s."
+msgstr ""
+
+#: i18n/extracted-strings.js:148
+msgid "No recipients configured."
+msgstr ""
+
+#: i18n/extracted-strings.js:149
+msgid "Could not send digest."
+msgstr ""
+
+#: i18n/extracted-strings.js:150
+msgid "%d days"
+msgstr ""
+
+#: i18n/extracted-strings.js:151
+msgid "Loading report…"
+msgstr ""
+
+#: i18n/extracted-strings.js:152
+msgid "Failed to load report."
+msgstr ""
+
+#: i18n/extracted-strings.js:153
+msgid "Scheduled digests"
+msgstr ""
+
+#: i18n/extracted-strings.js:154
+msgid "Weekly report"
+msgstr ""
+
+#: i18n/extracted-strings.js:155
+msgid "Email a summary once a week."
+msgstr ""
+
+#: i18n/extracted-strings.js:156
+msgid "Monthly report"
+msgstr ""
+
+#: i18n/extracted-strings.js:157
+msgid "Email a summary once a month."
+msgstr ""
+
+#: i18n/extracted-strings.js:159
+msgid "Comma-separated email addresses. Defaults to the site admin."
+msgstr ""
+
+#: i18n/extracted-strings.js:160
+msgid "Send a test digest"
+msgstr ""
+
+#: i18n/extracted-strings.js:161
+msgid "Send the current period's report to the recipients now."
+msgstr ""
+
+#: i18n/extracted-strings.js:162
+msgid "Sending…"
+msgstr ""
+
+#: i18n/extracted-strings.js:163
+msgid "Send now"
+msgstr ""
+
+#: i18n/extracted-strings.js:164
+msgid "Email logging is off. Tracking needs a log entry to attach opens and clicks to, so enable logging on the Email Logs tab first."
+msgstr ""
+
+#: i18n/extracted-strings.js:165
+msgid "Open Tracking"
+msgstr ""
+
+#: i18n/extracted-strings.js:166
+msgid "Add an invisible pixel to HTML emails to record when they are opened."
+msgstr ""
+
+#: i18n/extracted-strings.js:167
+msgid "Click Tracking"
+msgstr ""
+
+#: i18n/extracted-strings.js:168
+msgid "Rewrite links in HTML emails to record which ones recipients click."
+msgstr ""

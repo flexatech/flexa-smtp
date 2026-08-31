@@ -19,9 +19,15 @@ final class MailgunMailer extends AbstractApiMailer {
 
 	public static function credential_schema(): array {
 		return [
-			'api_key' => [ 'type' => 'string', 'secret' => true ],
+			'api_key' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 			'domain'  => [ 'type' => 'string' ],
-			'region'  => [ 'type' => 'enum', 'enum' => [ 'us', 'eu' ] ],
+			'region'  => [
+				'type' => 'enum',
+				'enum' => [ 'us', 'eu' ],
+			],
 		];
 	}
 

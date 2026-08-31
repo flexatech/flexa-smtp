@@ -19,7 +19,10 @@ final class MandrillMailer extends AbstractApiMailer {
 
 	public static function credential_schema(): array {
 		return [
-			'api_key' => [ 'type' => 'string', 'secret' => true ],
+			'api_key' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 		];
 	}
 
@@ -41,15 +44,25 @@ final class MandrillMailer extends AbstractApiMailer {
 		$to = [];
 		foreach ( $message->to as $r ) {
 			$to[] = array_filter(
-				[ 'email' => (string) $r['address'], 'name' => (string) $r['name'], 'type' => 'to' ],
+				[
+					'email' => (string) $r['address'],
+					'name'  => (string) $r['name'],
+					'type'  => 'to',
+				],
 				static fn ( string $v ): bool => '' !== $v
 			);
 		}
 		foreach ( $message->cc as $r ) {
-			$to[] = [ 'email' => (string) $r['address'], 'type' => 'cc' ];
+			$to[] = [
+				'email' => (string) $r['address'],
+				'type'  => 'cc',
+			];
 		}
 		foreach ( $message->bcc as $r ) {
-			$to[] = [ 'email' => (string) $r['address'], 'type' => 'bcc' ];
+			$to[] = [
+				'email' => (string) $r['address'],
+				'type'  => 'bcc',
+			];
 		}
 
 		$msg = [
@@ -105,7 +118,13 @@ final class MandrillMailer extends AbstractApiMailer {
 		if ( is_array( $data ) && isset( $data['status'] ) && 'error' === $data['status'] ) {
 			$msg = isset( $data['message'] ) && is_string( $data['message'] ) ? $data['message'] : 'Mandrill API error.';
 
-			return Result::error( $msg, [ 'mailer' => $this->slug(), 'code' => $code ] );
+			return Result::error(
+				$msg,
+				[
+					'mailer' => $this->slug(),
+					'code'   => $code,
+				]
+			);
 		}
 
 		// Otherwise it is a list of per-recipient results.
@@ -116,12 +135,20 @@ final class MandrillMailer extends AbstractApiMailer {
 
 					return Result::error(
 						sprintf( 'Mandrill %s: %s', (string) $entry['status'], $reason ),
-						[ 'mailer' => $this->slug(), 'code' => $code ]
+						[
+							'mailer' => $this->slug(),
+							'code'   => $code,
+						]
 					);
 				}
 			}
 		}
 
-		return Result::success( [ 'mailer' => $this->slug(), 'code' => $code ] );
+		return Result::success(
+			[
+				'mailer' => $this->slug(),
+				'code'   => $code,
+			]
+		);
 	}
 }

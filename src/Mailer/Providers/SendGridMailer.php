@@ -17,7 +17,10 @@ final class SendGridMailer extends AbstractApiMailer {
 
 	public static function credential_schema(): array {
 		return [
-			'api_key' => [ 'type' => 'string', 'secret' => true ],
+			'api_key' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 		];
 	}
 
@@ -46,13 +49,22 @@ final class SendGridMailer extends AbstractApiMailer {
 		$text    = $this->text_part( $message );
 		$html    = $this->html_part( $message );
 		if ( '' !== $text ) {
-			$content[] = [ 'type' => 'text/plain', 'value' => $text ];
+			$content[] = [
+				'type'  => 'text/plain',
+				'value' => $text,
+			];
 		}
 		if ( '' !== $html ) {
-			$content[] = [ 'type' => 'text/html', 'value' => $html ];
+			$content[] = [
+				'type'  => 'text/html',
+				'value' => $html,
+			];
 		}
 		if ( [] === $content ) {
-			$content[] = [ 'type' => 'text/plain', 'value' => $message->body ];
+			$content[] = [
+				'type'  => 'text/plain',
+				'value' => $message->body,
+			];
 		}
 
 		$payload = [

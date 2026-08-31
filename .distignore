@@ -9,7 +9,8 @@
 /.vscode
 /.DS_Store
 /node_modules
-/client
+/vendor
+/apps/admin/node_modules
 /tests
 /docs
 /release.sh
@@ -22,6 +23,8 @@
 /package.json
 /pnpm-workspace.yaml
 /tsconfig.json
+/apps/admin/tsconfig.json
+/apps/admin/vite.config.ts
 /phpcs.xml.dist
 /phpstan.neon
 /phpstan-bootstrap.php

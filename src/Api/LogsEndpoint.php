@@ -128,7 +128,12 @@ final class LogsEndpoint extends Endpoint {
 		$filters = $this->filters( $request );
 
 		// Cap the export so a huge table can't exhaust memory in one request.
-		$rows = $repo->query( $filters + [ 'limit' => 5000, 'offset' => 0 ] );
+		$rows = $repo->query(
+			$filters + [
+				'limit'  => 5000,
+				'offset' => 0,
+			]
+		);
 
 		if ( headers_sent() ) {
 			// Fallback: cannot stream, return JSON so the caller still gets data.
@@ -258,7 +263,7 @@ final class LogsEndpoint extends Endpoint {
 
 	private function join_recipients( EmailLog $log ): string {
 		$addresses = array_map(
-			static fn ( array $r ): string => (string) ( $r['address'] ?? '' ),
+			static fn ( array $r ): string => $r['address'],
 			$log->email_to
 		);
 

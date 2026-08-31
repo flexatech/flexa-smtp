@@ -40,7 +40,7 @@ final class AwsV4Signer {
 
 		// Canonical headers must include host and x-amz-date; merge in the
 		// caller's headers (e.g. content-type), lowercased and sorted.
-		$canonical_headers        = [];
+		$canonical_headers               = [];
 		$canonical_headers['host']       = $host;
 		$canonical_headers['x-amz-date'] = $amz_date;
 		foreach ( $headers as $name => $value ) {

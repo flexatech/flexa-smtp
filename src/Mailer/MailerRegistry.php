@@ -40,9 +40,7 @@ final class MailerRegistry {
 			return null;
 		}
 
-		$mailer = ( $this->factories[ $slug ] )();
-
-		return $mailer instanceof MailerInterface ? $mailer : null;
+		return ( $this->factories[ $slug ] )();
 	}
 
 	public function has( string $slug ): bool {

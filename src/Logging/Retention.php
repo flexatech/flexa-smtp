@@ -22,7 +22,14 @@ final class Retention {
 	public const HOOK = 'flexa_smtp_retention';
 
 	public function register(): void {
-		add_action( self::HOOK, [ $this, 'purge' ] );
+		// Wrap in a void closure: purge() returns the deleted-row count for CLI/
+		// tests, but an action callback must not return anything.
+		add_action(
+			self::HOOK,
+			function (): void {
+				$this->purge();
+			}
+		);
 
 		if ( ! wp_next_scheduled( self::HOOK ) ) {
 			wp_schedule_event( time(), 'daily', self::HOOK );

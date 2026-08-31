@@ -12,10 +12,13 @@
 
 declare(strict_types=1);
 
-defined( 'FLEXA_SMTP_VERSION' ) || define( 'FLEXA_SMTP_VERSION', '0.1.0' );
+defined( 'FLEXA_SMTP_VERSION' ) || define( 'FLEXA_SMTP_VERSION', '1.0.0' );
 defined( 'FLEXA_SMTP_FILE' ) || define( 'FLEXA_SMTP_FILE', __DIR__ . '/flexa-smtp.php' );
 defined( 'FLEXA_SMTP_PATH' ) || define( 'FLEXA_SMTP_PATH', __DIR__ . '/' );
 defined( 'FLEXA_SMTP_URL' ) || define( 'FLEXA_SMTP_URL', 'https://example.test/wp-content/plugins/flexa-smtp/' );
 defined( 'FLEXA_SMTP_BASENAME' ) || define( 'FLEXA_SMTP_BASENAME', 'flexa-smtp/flexa-smtp.php' );
 defined( 'FLEXA_SMTP_REST_NAMESPACE' ) || define( 'FLEXA_SMTP_REST_NAMESPACE', 'flexa-smtp/v1' );
 defined( 'FLEXA_SMTP_TEXT_DOMAIN' ) || define( 'FLEXA_SMTP_TEXT_DOMAIN', 'flexa-smtp' );
+
+// WordPress core constant used when lazily requiring the bundled PHPMailer.
+defined( 'WPINC' ) || define( 'WPINC', 'wp-includes' );

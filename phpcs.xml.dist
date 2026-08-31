@@ -1,0 +1,179 @@
+<?xml version="1.0"?>
+<ruleset name="Flexa SMTP">
+    <description>Coding standards for Flexa SMTP.</description>
+
+    <file>./src</file>
+    <file>./flexa-smtp.php</file>
+    <file>./uninstall.php</file>
+    <file>./templates</file>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/assets/dist/*</exclude-pattern>
+    <exclude-pattern>*/apps/*</exclude-pattern>
+
+    <arg value="sp"/>
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+
+    <config name="testVersion" value="8.2-"/>
+    <config name="minimum_supported_wp_version" value="5.9"/>
+
+    <rule ref="WordPress">
+        <exclude name="WordPress.Files.FileName"/>
+        <exclude name="Universal.Operators.DisallowShortTernary"/>
+
+        <!--
+            Deliberate Flexa house style (documented in the
+            flexa-plugin-conventions skill). These are NOT debt to be fixed;
+            "fixing" them would violate the lineage conventions and diverge
+            from the canonical sibling plugin.
+        -->
+
+        <!-- Short array syntax `[]` is the house style, everywhere. -->
+        <exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+
+        <!--
+            Hooks are intentionally dot-namespaced (flexa_smtp.domain.event)
+            so they read as a hierarchy and never collide. Never "fix" these
+            to underscores for phpcs.
+        -->
+        <exclude name="WordPress.NamingConventions.ValidHookName"/>
+
+        <!--
+            Sparse / terse typed docblocks are the documented convention:
+            a docblock is written only for non-trivial logic or array shapes,
+            and then carries only the non-trivial @param (e.g. an
+            `@param array<string,mixed> $data`), not a full positional tag
+            list with prose. Squiz's FunctionComment sniff assumes a 1:1
+            positional @param↔parameter mapping, so a single-tag docblock
+            produces cascades of false ParamNameNoMatch / IncorrectTypeHint /
+            MissingParamTag errors. phpstan level 6 (clean, gated on every
+            commit) is the *real* type-correctness gate here — these Squiz
+            doc-completeness opinions are redundant noise against the terse
+            docblock style and the minimal-file-header convention.
+        -->
+        <exclude name="Squiz.Commenting.FileComment"/>
+        <exclude name="Squiz.Commenting.ClassComment"/>
+        <exclude name="Squiz.Commenting.FunctionComment"/>
+        <exclude name="Squiz.Commenting.VariableComment"/>
+        <exclude name="Generic.Commenting.DocComment"/>
+        <exclude name="Squiz.Commenting.FunctionCommentThrowTag"/>
+
+        <!--
+            Yoda conditions: the codebase relies on declare(strict_types=1)
+            plus strict (===/!==) comparisons; the assignment-in-condition
+            class of bug Yoda guards against cannot occur. A common,
+            defensible modern-WP choice, in the same spirit as the
+            DisallowShortTernary exclude above.
+        -->
+        <exclude name="WordPress.PHP.YodaConditions"/>
+
+        <!--
+            $new / $old are the documented parameter names of the
+            flexa_smtp.settings.updated ( $new, $old ) hook contract, and
+            $class is the conventional PSR-4 autoloader parameter. (Warning
+            only — never blocked a build.)
+        -->
+        <exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames"/>
+
+        <!--
+            PHPMailer's public API is CamelCase ($php->Body, $php->AltBody,
+            $php->From, $php->Subject, …). The whole point of this plugin is to
+            drive PHPMailer and the provider transports, so reading/writing
+            those properties is unavoidable across the Mailer/ and Logging/
+            layers. This is a mailer plugin's domain surface, not snake_case
+            debt in our own state.
+        -->
+        <exclude name="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase"/>
+
+        <!--
+            base64 is used for binary-safe transport, never obfuscation:
+            AES-256-GCM ciphertext (Support\Encryption), AWS SigV4 signing
+            (Support\AwsV4Signer), Gmail raw-MIME (base64url), API attachment
+            payloads, and decoding foreign plugins' base64-stored SMTP
+            passwords on import. All are legitimate, documented uses.
+        -->
+        <exclude name="WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode"/>
+        <exclude name="WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode"/>
+    </rule>
+    <rule ref="PHPCompatibilityWP"/>
+
+    <!--
+        Documented deliberate design exceptions, scoped to the exact files
+        whose architecture requires them. Each is intentional; a blanket rule
+        would hide real findings elsewhere, so the exclusion is path-scoped.
+    -->
+
+    <!--
+        Enqueue reads the local Vite manifest.json (a bundled local file, not
+        a URL); file_get_contents is correct here — wp_remote_get is for
+        remote resources.
+    -->
+    <rule ref="WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents">
+        <exclude-pattern>*/src/Admin/Enqueue.php</exclude-pattern>
+    </rule>
+
+    <!--
+        Schema owns CREATE/DROP TABLE (dbDelta lifecycle) and uninstall.php
+        removes the plugin's own tables/options — direct, uncached schema
+        queries are the point. Domain repositories already scope their own
+        WordPress.DB.* disables inline.
+    -->
+    <rule ref="WordPress.DB.DirectDatabaseQuery">
+        <exclude-pattern>*/src/Database/Schema.php</exclude-pattern>
+        <exclude-pattern>*/uninstall.php</exclude-pattern>
+    </rule>
+
+    <!--
+        query()/count() pass a pre-built placeholder string plus a params array
+        to $wpdb->prepare(); WPCS's UnfinishedPrepare heuristic can't see the
+        placeholders live in the string variable (every value IS bound).
+    -->
+    <rule ref="WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare">
+        <exclude-pattern>*/src/Domain/EmailLogRepository.php</exclude-pattern>
+    </rule>
+
+    <!--
+        SourceDetector walks debug_backtrace() to attribute a logged email to
+        the plugin/theme that called wp_mail() — that is its whole job, and it
+        never leaks a filesystem path (only the top slug segment).
+    -->
+    <rule ref="WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace">
+        <exclude-pattern>*/src/Logging/SourceDetector.php</exclude-pattern>
+    </rule>
+
+    <!--
+        MailerManager installs the plugin's PhpMailerBridge as the global
+        $phpmailer (the documented way to take over wp_mail, mirroring WP
+        core), and throws internal exceptions whose messages are caught and
+        escaped at the display boundary, never echoed raw here.
+    -->
+    <rule ref="WordPress.WP.GlobalVariablesOverride.Prohibited">
+        <exclude-pattern>*/src/Mailer/MailerManager.php</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Security.EscapeOutput.ExceptionNotEscaped">
+        <exclude-pattern>*/src/Mailer/MailerManager.php</exclude-pattern>
+    </rule>
+
+    <!--
+        The /logs/export CSV is streamed to php://output with fopen/fputcsv/
+        fclose; WP_Filesystem cannot stream a download to the output buffer,
+        so the native file handle is required (the same approach WP core uses
+        for CSV exporters).
+    -->
+    <rule ref="WordPress.WP.AlternativeFunctions.file_system_operations_fclose">
+        <exclude-pattern>*/src/Api/LogsEndpoint.php</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.WP.AlternativeFunctions.file_system_operations_fopen">
+        <exclude-pattern>*/src/Api/LogsEndpoint.php</exclude-pattern>
+    </rule>
+
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="flexa-smtp"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

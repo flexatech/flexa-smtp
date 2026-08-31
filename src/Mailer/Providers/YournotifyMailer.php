@@ -17,7 +17,10 @@ final class YournotifyMailer extends AbstractApiMailer {
 
 	public static function credential_schema(): array {
 		return [
-			'api_key' => [ 'type' => 'string', 'secret' => true ],
+			'api_key' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 		];
 	}
 

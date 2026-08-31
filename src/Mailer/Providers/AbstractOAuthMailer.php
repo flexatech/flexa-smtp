@@ -38,7 +38,10 @@ abstract class AbstractOAuthMailer extends AbstractApiMailer implements UsesOAut
 	protected static function oauth_fields(): array {
 		return [
 			'client_id'     => [ 'type' => 'string' ],
-			'client_secret' => [ 'type' => 'string', 'secret' => true ],
+			'client_secret' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 		];
 	}
 
@@ -218,7 +221,13 @@ abstract class AbstractOAuthMailer extends AbstractApiMailer implements UsesOAut
 		$data = json_decode( $raw, true );
 
 		if ( ! is_array( $data ) || empty( $data['access_token'] ) || ! is_string( $data['access_token'] ) ) {
-			return Result::error( $this->extract_error( $raw, $code ), [ 'mailer' => $this->slug(), 'code' => $code ] );
+			return Result::error(
+				$this->extract_error( $raw, $code ),
+				[
+					'mailer' => $this->slug(),
+					'code'   => $code,
+				]
+			);
 		}
 
 		$bundle = [
@@ -236,6 +245,11 @@ abstract class AbstractOAuthMailer extends AbstractApiMailer implements UsesOAut
 
 		TokenStore::save( $this->slug(), $bundle );
 
-		return Result::success( [ 'mailer' => $this->slug(), 'code' => $code ] );
+		return Result::success(
+			[
+				'mailer' => $this->slug(),
+				'code'   => $code,
+			]
+		);
 	}
 }

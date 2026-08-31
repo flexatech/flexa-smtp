@@ -17,7 +17,10 @@ final class BrevoMailer extends AbstractApiMailer {
 
 	public static function credential_schema(): array {
 		return [
-			'api_key' => [ 'type' => 'string', 'secret' => true ],
+			'api_key' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 		];
 	}
 
@@ -39,9 +42,11 @@ final class BrevoMailer extends AbstractApiMailer {
 	protected function build_payload( Message $message ): array {
 		$from    = $this->from( $message );
 		$payload = [
-			'sender'  => array_filter(
-				[ 'email' => $from['email'], 'name' => $from['name'] ],
-				static fn ( string $v ): bool => '' !== $v
+			'sender'  => $this->compact_pairs(
+				[
+					'email' => $from['email'],
+					'name'  => $from['name'],
+				]
 			),
 			'to'      => $this->map_emails( $message->to ),
 			'subject' => $message->subject,
@@ -68,16 +73,21 @@ final class BrevoMailer extends AbstractApiMailer {
 
 		$reply = $this->reply_to( $message );
 		if ( '' !== $reply['email'] ) {
-			$payload['replyTo'] = array_filter(
-				[ 'email' => $reply['email'], 'name' => $reply['name'] ],
-				static fn ( string $v ): bool => '' !== $v
+			$payload['replyTo'] = $this->compact_pairs(
+				[
+					'email' => $reply['email'],
+					'name'  => $reply['name'],
+				]
 			);
 		}
 
 		$attachments = $this->attachments( $message );
 		if ( [] !== $attachments ) {
 			$payload['attachment'] = array_map(
-				static fn ( array $a ): array => [ 'content' => $a['content'], 'name' => $a['filename'] ],
+				static fn ( array $a ): array => [
+					'content' => $a['content'],
+					'name'    => $a['filename'],
+				],
 				$attachments
 			);
 		}

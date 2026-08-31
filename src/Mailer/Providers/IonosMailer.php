@@ -37,9 +37,18 @@ final class IonosMailer implements MailerInterface, ConfiguresPhpMailer, Provide
 	public static function credential_schema(): array {
 		return [
 			'user'       => [ 'type' => 'string' ],
-			'pass'       => [ 'type' => 'string', 'secret' => true ],
-			'region'     => [ 'type' => 'enum', 'enum' => [ 'com', 'de', 'es', 'fr', 'co-uk' ] ],
-			'encryption' => [ 'type' => 'enum', 'enum' => [ 'tls', 'ssl' ] ],
+			'pass'       => [
+				'type'   => 'string',
+				'secret' => true,
+			],
+			'region'     => [
+				'type' => 'enum',
+				'enum' => [ 'com', 'de', 'es', 'fr', 'co-uk' ],
+			],
+			'encryption' => [
+				'type' => 'enum',
+				'enum' => [ 'tls', 'ssl' ],
+			],
 		];
 	}
 

@@ -84,7 +84,10 @@ final class TokenStore {
 	}
 
 	/**
-	 * @return array<string, array<string, mixed>>
+	 * Raw stored option — values are per-slug bundles but come straight from
+	 * get_option(), so callers still guard each entry with is_array().
+	 *
+	 * @return array<string, mixed>
 	 */
 	private static function read(): array {
 		$stored = get_option( self::OPTION_KEY, [] );

@@ -17,8 +17,14 @@ final class SparkPostMailer extends AbstractApiMailer {
 
 	public static function credential_schema(): array {
 		return [
-			'api_key' => [ 'type' => 'string', 'secret' => true ],
-			'region'  => [ 'type' => 'enum', 'enum' => [ 'us', 'eu' ] ],
+			'api_key' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
+			'region'  => [
+				'type' => 'enum',
+				'enum' => [ 'us', 'eu' ],
+			],
 		];
 	}
 
@@ -38,7 +44,15 @@ final class SparkPostMailer extends AbstractApiMailer {
 
 	protected function build_payload( Message $message ): array {
 		$recipients = array_map(
-			static fn ( array $r ): array => [ 'address' => array_filter( [ 'email' => (string) $r['address'], 'name' => (string) $r['name'] ], static fn ( string $v ): bool => '' !== $v ) ],
+			static fn ( array $r ): array => [
+				'address' => array_filter(
+					[
+						'email' => (string) $r['address'],
+						'name'  => (string) $r['name'],
+					],
+					static fn ( string $v ): bool => '' !== $v
+				),
+			],
 			$message->to
 		);
 		// Cc/Bcc are delivered by adding them as recipients; Cc is also surfaced

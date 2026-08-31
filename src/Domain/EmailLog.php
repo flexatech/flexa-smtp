@@ -13,8 +13,8 @@ defined( 'ABSPATH' ) || exit;
  * only ever sees native PHP structures.
  */
 final class EmailLog {
-	public const STATUS_FAILED  = 0;
-	public const STATUS_SENT    = 1;
+	public const STATUS_FAILED = 0;
+	public const STATUS_SENT   = 1;
 	// A row inserted when the send is attempted, before its outcome is known.
 	// Because wp_mail() is synchronous the row is updated to SENT/FAILED within
 	// the same request; it only lingers if the request dies mid-send.
@@ -114,7 +114,10 @@ final class EmailLog {
 					'name'    => (string) ( $entry['name'] ?? '' ),
 				];
 			} elseif ( is_string( $entry ) ) {
-				$out[] = [ 'address' => $entry, 'name' => '' ];
+				$out[] = [
+					'address' => $entry,
+					'name'    => '',
+				];
 			}
 		}
 

@@ -36,7 +36,10 @@ final class ZohoMailer extends AbstractOAuthMailer {
 		return array_merge(
 			self::oauth_fields(),
 			[
-				'region' => [ 'type' => 'enum', 'enum' => [ 'com', 'eu', 'in', 'au', 'jp' ] ],
+				'region' => [
+					'type' => 'enum',
+					'enum' => [ 'com', 'eu', 'in', 'au', 'jp' ],
+				],
 			]
 		);
 	}
@@ -117,13 +120,30 @@ final class ZohoMailer extends AbstractOAuthMailer {
 			$data = json_decode( $raw, true );
 			// Zoho wraps status in {status:{code:200,...}}; a non-200 there is a failure.
 			if ( is_array( $data ) && isset( $data['status']['code'] ) && 200 !== (int) $data['status']['code'] ) {
-				return Result::error( $this->extract_error( $raw, $code ), [ 'mailer' => $this->slug(), 'code' => $code ] );
+				return Result::error(
+					$this->extract_error( $raw, $code ),
+					[
+						'mailer' => $this->slug(),
+						'code'   => $code,
+					]
+				);
 			}
 
-			return Result::success( [ 'mailer' => $this->slug(), 'code' => $code ] );
+			return Result::success(
+				[
+					'mailer' => $this->slug(),
+					'code'   => $code,
+				]
+			);
 		}
 
-		return Result::error( $this->extract_error( $raw, $code ), [ 'mailer' => $this->slug(), 'code' => $code ] );
+		return Result::error(
+			$this->extract_error( $raw, $code ),
+			[
+				'mailer' => $this->slug(),
+				'code'   => $code,
+			]
+		);
 	}
 
 	/**

@@ -62,7 +62,14 @@ final class OutlookMailer extends AbstractOAuthMailer {
 
 		$reply = $this->reply_to( $message );
 		if ( '' !== $reply['email'] ) {
-			$graph['replyTo'] = $this->recipients( [ [ 'address' => $reply['email'], 'name' => $reply['name'] ] ] );
+			$graph['replyTo'] = $this->recipients(
+				[
+					[
+						'address' => $reply['email'],
+						'name'    => $reply['name'],
+					],
+				]
+			);
 		}
 
 		$attachments = $this->attachments( $message );
@@ -95,14 +102,14 @@ final class OutlookMailer extends AbstractOAuthMailer {
 	private function recipients( array $list ): array {
 		$out = [];
 		foreach ( $list as $row ) {
-			$address = (string) ( $row['address'] ?? '' );
+			$address = $row['address'];
 			if ( '' === $address ) {
 				continue;
 			}
 			$out[] = [
 				'emailAddress' => [
 					'address' => $address,
-					'name'    => (string) ( $row['name'] ?? '' ),
+					'name'    => $row['name'],
 				],
 			];
 		}

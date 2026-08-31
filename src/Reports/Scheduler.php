@@ -18,8 +18,8 @@ defined( 'ABSPATH' ) || exit;
 final class Scheduler {
 	use HasInstance;
 
-	public const WEEKLY   = 'flexa_smtp_report_weekly';
-	public const MONTHLY  = 'flexa_smtp_report_monthly';
+	public const WEEKLY            = 'flexa_smtp_report_weekly';
+	public const MONTHLY           = 'flexa_smtp_report_monthly';
 	private const MONTHLY_SCHEDULE = 'flexa_smtp_monthly';
 
 	public function register(): void {

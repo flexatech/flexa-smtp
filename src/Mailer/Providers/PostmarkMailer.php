@@ -19,7 +19,10 @@ final class PostmarkMailer extends AbstractApiMailer {
 
 	public static function credential_schema(): array {
 		return [
-			'server_token'   => [ 'type' => 'string', 'secret' => true ],
+			'server_token'   => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 			'message_stream' => [ 'type' => 'string' ],
 		];
 	}
@@ -96,7 +99,13 @@ final class PostmarkMailer extends AbstractApiMailer {
 		if ( is_array( $data ) && isset( $data['ErrorCode'] ) && 0 !== (int) $data['ErrorCode'] ) {
 			$msg = isset( $data['Message'] ) && is_string( $data['Message'] ) ? $data['Message'] : 'Postmark rejected the message.';
 
-			return Result::error( $msg, [ 'mailer' => $this->slug(), 'code' => $code ] );
+			return Result::error(
+				$msg,
+				[
+					'mailer' => $this->slug(),
+					'code'   => $code,
+				]
+			);
 		}
 
 		return parent::interpret( $code, $raw );

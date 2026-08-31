@@ -1,6 +1,7 @@
 import {
     BarChart3,
     ClipboardList,
+    DownloadCloud,
     Mail,
     Mailbox,
     MousePointerClick,
@@ -19,6 +20,7 @@ import { MailerTab } from "./tabs/MailerTab";
 import { LogsTab } from "./tabs/LogsTab";
 import { TrackingTab } from "./tabs/TrackingTab";
 import { ReportsTab } from "./tabs/ReportsTab";
+import { ImportTab } from "./tabs/ImportTab";
 import { AdditionalTab } from "./tabs/AdditionalTab";
 import {
     type MailerValues,
@@ -102,6 +104,14 @@ const SECTIONS: SectionMeta[] = [
         icon: BarChart3,
         paneTitle: __("Reports"),
         paneSubtitle: __("Charts and summaries of your email activity."),
+    },
+    {
+        id: "import",
+        title: __("Import"),
+        subtitle: __("From other plugins"),
+        icon: DownloadCloud,
+        paneTitle: __("Import"),
+        paneSubtitle: __("Bring settings and logs over from another SMTP plugin."),
     },
     {
         id: "additional",
@@ -190,7 +200,7 @@ export function SettingsPage() {
     const activeSection =
         SECTIONS.find((s) => s.id === active) ?? SECTIONS[0];
     const tabProps = { form, setField, setMailerField };
-    const showSave = active !== "danger";
+    const showSave = active !== "danger" && active !== "import";
 
     return (
         <div className="fs:min-h-full fs:bg-slate-50">
@@ -267,6 +277,7 @@ export function SettingsPage() {
                         {active === "logs" && <LogsTab {...tabProps} />}
                         {active === "tracking" && <TrackingTab {...tabProps} />}
                         {active === "reports" && <ReportsTab {...tabProps} />}
+                        {active === "import" && <ImportTab />}
                         {active === "additional" && <AdditionalTab {...tabProps} />}
                         {active === "danger" && <DangerZone />}
                     </div>

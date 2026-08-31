@@ -28,7 +28,7 @@ final class SourceDetector {
 		$theme_root = wp_normalize_path( get_theme_root() );
 
 		foreach ( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ) as $frame ) {
-			if ( empty( $frame['file'] ) || ! is_string( $frame['file'] ) ) {
+			if ( empty( $frame['file'] ) ) {
 				continue;
 			}
 
@@ -62,7 +62,7 @@ final class SourceDetector {
 	private static function top_segment( string $file, string $base ): string {
 		$relative = ltrim( substr( $file, strlen( $base ) ), '/' );
 		$segment  = strtok( $relative, '/' );
-		if ( false === $segment || '' === $segment ) {
+		if ( false === $segment ) {
 			$segment = $relative;
 		}
 

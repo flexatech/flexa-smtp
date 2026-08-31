@@ -21,7 +21,10 @@ final class AmazonSesMailer extends AbstractApiMailer {
 	public static function credential_schema(): array {
 		return [
 			'access_key' => [ 'type' => 'string' ],
-			'secret_key' => [ 'type' => 'string', 'secret' => true ],
+			'secret_key' => [
+				'type'   => 'string',
+				'secret' => true,
+			],
 			'region'     => [
 				'type' => 'enum',
 				'enum' => [
@@ -59,7 +62,7 @@ final class AmazonSesMailer extends AbstractApiMailer {
 	}
 
 	protected function build_payload( Message $message ): array {
-		$from    = $this->from( $message );
+		$from     = $this->from( $message );
 		$from_hdr = '' !== $from['name'] ? sprintf( '%s <%s>', $from['name'], $from['email'] ) : $from['email'];
 
 		$destination = [ 'ToAddresses' => $this->map_addresses( $message->to ) ];
@@ -75,13 +78,22 @@ final class AmazonSesMailer extends AbstractApiMailer {
 		$html    = $this->html_part( $message );
 		$text    = $this->text_part( $message );
 		if ( '' !== $html ) {
-			$body['Html'] = [ 'Data' => $html, 'Charset' => $charset ];
+			$body['Html'] = [
+				'Data'    => $html,
+				'Charset' => $charset,
+			];
 		}
 		if ( '' !== $text ) {
-			$body['Text'] = [ 'Data' => $text, 'Charset' => $charset ];
+			$body['Text'] = [
+				'Data'    => $text,
+				'Charset' => $charset,
+			];
 		}
 		if ( [] === $body ) {
-			$body['Text'] = [ 'Data' => $message->body, 'Charset' => $charset ];
+			$body['Text'] = [
+				'Data'    => $message->body,
+				'Charset' => $charset,
+			];
 		}
 
 		$payload = [
@@ -89,7 +101,10 @@ final class AmazonSesMailer extends AbstractApiMailer {
 			'Destination'      => $destination,
 			'Content'          => [
 				'Simple' => [
-					'Subject' => [ 'Data' => $message->subject, 'Charset' => $charset ],
+					'Subject' => [
+						'Data'    => $message->subject,
+						'Charset' => $charset,
+					],
 					'Body'    => $body,
 				],
 			],

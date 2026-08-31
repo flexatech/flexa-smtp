@@ -78,10 +78,16 @@ final class Settings {
 			'smtp' => [
 				'host'       => [ 'type' => 'string' ],
 				'port'       => [ 'type' => 'int' ],
-				'encryption' => [ 'type' => 'enum', 'enum' => [ 'none', 'ssl', 'tls' ] ],
+				'encryption' => [
+					'type' => 'enum',
+					'enum' => [ 'none', 'ssl', 'tls' ],
+				],
 				'auth'       => [ 'type' => 'bool' ],
 				'user'       => [ 'type' => 'string' ],
-				'pass'       => [ 'type' => 'string', 'secret' => true ],
+				'pass'       => [
+					'type'   => 'string',
+					'secret' => true,
+				],
 			],
 		];
 
@@ -108,8 +114,8 @@ final class Settings {
 		foreach ( self::INT_KEYS as $key ) {
 			$defaults[ $key ] = 0;
 		}
-		$defaults['current_mailer']     = 'mail';
-		$defaults['mailers']            = [];
+		$defaults['current_mailer'] = 'mail';
+		$defaults['mailers']        = [];
 		// Logging is on by default with a 30-day retention window.
 		$defaults['enable_email_log']   = true;
 		$defaults['log_retention_days'] = 30;
@@ -336,7 +342,7 @@ final class Settings {
 	 */
 	private static function merge_mailers( array $stored, array $incoming ): array {
 		foreach ( $incoming as $slug => $fields ) {
-			$base           = isset( $stored[ $slug ] ) && is_array( $stored[ $slug ] ) ? $stored[ $slug ] : [];
+			$base            = $stored[ $slug ] ?? [];
 			$stored[ $slug ] = array_merge( $base, $fields );
 		}
 

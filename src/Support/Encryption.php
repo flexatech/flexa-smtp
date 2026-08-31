@@ -18,9 +18,9 @@ defined( 'ABSPATH' ) || exit;
  * Ciphertext format: "fsg1:" . base64( iv[12] . tag[16] . ciphertext ).
  */
 final class Encryption {
-	private const PREFIX = 'fsg1:';
-	private const CIPHER = 'aes-256-gcm';
-	private const IV_LEN = 12;
+	private const PREFIX  = 'fsg1:';
+	private const CIPHER  = 'aes-256-gcm';
+	private const IV_LEN  = 12;
 	private const TAG_LEN = 16;
 
 	public static function is_encrypted( string $value ): bool {

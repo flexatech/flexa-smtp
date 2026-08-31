@@ -214,9 +214,9 @@ final class OAuthEndpoint extends Endpoint {
 	 */
 	private function redirect_back( string $slug, string $status, string $detail ): void {
 		$args = [
-			'page'          => 'flexa-smtp',
-			'oauth'         => $slug,
-			'oauth_status'  => $status,
+			'page'         => 'flexa-smtp',
+			'oauth'        => $slug,
+			'oauth_status' => $status,
 		];
 		if ( '' !== $detail ) {
 			$args['oauth_detail'] = rawurlencode( $detail );

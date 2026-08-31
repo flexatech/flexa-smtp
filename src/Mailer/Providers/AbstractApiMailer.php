@@ -126,12 +126,20 @@ abstract class AbstractApiMailer implements MailerInterface, ProvidesCredentialS
 	 */
 	protected function interpret( int $code, string $raw ): Result {
 		if ( $code >= 200 && $code < 300 ) {
-			return Result::success( [ 'mailer' => $this->slug(), 'code' => $code ] );
+			return Result::success(
+				[
+					'mailer' => $this->slug(),
+					'code'   => $code,
+				]
+			);
 		}
 
 		return Result::error(
 			$this->extract_error( $raw, $code ),
-			[ 'mailer' => $this->slug(), 'code' => $code ]
+			[
+				'mailer' => $this->slug(),
+				'code'   => $code,
+			]
 		);
 	}
 
@@ -172,9 +180,7 @@ abstract class AbstractApiMailer implements MailerInterface, ProvidesCredentialS
 			: sprintf( 'HTTP %d', $code );
 	}
 
-	/* ----------------------------------------------------------------------- */
-	/* Helpers for building payloads from a Message.                           */
-	/* ----------------------------------------------------------------------- */
+	// Helpers for building payloads from a Message.
 
 	/**
 	 * Decrypted credentials for this mailer.
@@ -187,6 +193,18 @@ abstract class AbstractApiMailer implements MailerInterface, ProvidesCredentialS
 
 	protected function cred( string $field, string $default = '' ): string {
 		return (string) ( $this->creds()[ $field ] ?? $default );
+	}
+
+	/**
+	 * Drop empty-string entries from a key/value map (e.g. an address pair
+	 * whose name is blank). Kept as a helper so callers pass a plain array
+	 * argument instead of inlining an array_filter with an arrow function.
+	 *
+	 * @param array<string, string> $pairs
+	 * @return array<string, string>
+	 */
+	protected function compact_pairs( array $pairs ): array {
+		return array_filter( $pairs, static fn ( string $v ): bool => '' !== $v );
 	}
 
 	protected function is_html( Message $message ): bool {
@@ -215,7 +233,10 @@ abstract class AbstractApiMailer implements MailerInterface, ProvidesCredentialS
 	protected function map_emails( array $list ): array {
 		$out = [];
 		foreach ( $list as $row ) {
-			$out[] = [ 'email' => (string) $row['address'], 'name' => (string) $row['name'] ];
+			$out[] = [
+				'email' => (string) $row['address'],
+				'name'  => (string) $row['name'],
+			];
 		}
 
 		return $out;
@@ -241,7 +262,10 @@ abstract class AbstractApiMailer implements MailerInterface, ProvidesCredentialS
 	 * @return array{email:string, name:string}
 	 */
 	protected function from( Message $message ): array {
-		return [ 'email' => $message->from_email, 'name' => $message->from_name ];
+		return [
+			'email' => $message->from_email,
+			'name'  => $message->from_name,
+		];
 	}
 
 	/**
@@ -292,9 +316,15 @@ abstract class AbstractApiMailer implements MailerInterface, ProvidesCredentialS
 	protected function reply_to( Message $message ): array {
 		$first = $message->reply_to[0] ?? null;
 		if ( is_array( $first ) ) {
-			return [ 'email' => (string) $first['address'], 'name' => (string) $first['name'] ];
+			return [
+				'email' => (string) $first['address'],
+				'name'  => (string) $first['name'],
+			];
 		}
 
-		return [ 'email' => '', 'name' => '' ];
+		return [
+			'email' => '',
+			'name'  => '',
+		];
 	}
 }

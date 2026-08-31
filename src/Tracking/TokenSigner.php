@@ -21,11 +21,22 @@ defined( 'ABSPATH' ) || exit;
  */
 final class TokenSigner {
 	public static function issue_open( int $log_id ): string {
-		return self::pack( [ 't' => 'o', 'l' => $log_id ] );
+		return self::pack(
+			[
+				't' => 'o',
+				'l' => $log_id,
+			]
+		);
 	}
 
 	public static function issue_click( int $log_id, string $url ): string {
-		return self::pack( [ 't' => 'c', 'l' => $log_id, 'u' => $url ] );
+		return self::pack(
+			[
+				't' => 'c',
+				'l' => $log_id,
+				'u' => $url,
+			]
+		);
 	}
 
 	/**
@@ -57,7 +68,10 @@ final class TokenSigner {
 			return null;
 		}
 
-		return [ 'log_id' => $log_id, 'url' => $url ];
+		return [
+			'log_id' => $log_id,
+			'url'    => $url,
+		];
 	}
 
 	/**
