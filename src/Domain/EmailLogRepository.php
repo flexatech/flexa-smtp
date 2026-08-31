@@ -7,9 +7,11 @@ namespace Flexa\Smtp\Domain;
 defined( 'ABSPATH' ) || exit;
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
-// This is the single data-access class for the email_logs table. Every dynamic
-// value is bound with $wpdb->prepare(); only the table name (a constant) and a
-// whitelisted ORDER BY column are interpolated, neither of which can be prepared.
+// This is the single data-access class for the email_logs table. Every value and
+// the table/column identifiers are bound with $wpdb->prepare() (%s/%d for values,
+// %i for identifiers — WP 6.2+). The only interpolation left is the dynamic WHERE
+// placeholder string in query()/count() (whose values are all bound) and the
+// hard-whitelisted ASC/DESC direction, neither of which has a prepare placeholder.
 
 /**
  * All reads and writes for `flexa_smtp_email_logs`. Callers never touch $wpdb
@@ -118,8 +120,7 @@ final class EmailLogRepository {
 		global $wpdb;
 
 		$table = $this->table();
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; id is bound.
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d AND flag_delete = 0", $id ), ARRAY_A );
+		$row   = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d AND flag_delete = 0', $table, $id ), ARRAY_A );
 
 		return is_array( $row ) ? EmailLog::from_row( $row ) : null;
 	}
@@ -139,13 +140,12 @@ final class EmailLogRepository {
 		$offset  = max( 0, (int) ( $args['offset'] ?? 0 ) );
 
 		$table = $this->table();
-		$sql   = "SELECT * FROM {$table} WHERE {$where} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+		$sql   = "SELECT * FROM %i WHERE {$where} ORDER BY %i {$order} LIMIT %d OFFSET %d";
 
-		$params[] = $limit;
-		$params[] = $offset;
+		$args = array_merge( [ $table ], $params, [ $orderby, $limit, $offset ] );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where is a placeholder string; every value is in $params.
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $params ), ARRAY_A );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table/orderby bound with %i, values with %s/%d; only $where (a placeholder string) and the whitelisted ASC/DESC direction are interpolated.
+		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
 		if ( ! is_array( $rows ) ) {
 			return [];
 		}
@@ -165,15 +165,16 @@ final class EmailLogRepository {
 		[ $where, $params ] = $this->build_where( $args );
 
 		$table = $this->table();
-		$sql   = "SELECT COUNT(*) FROM {$table} WHERE {$where}";
+		$sql   = "SELECT COUNT(*) FROM %i WHERE {$where}";
 
 		if ( [] === $params ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- no dynamic values; $where is static "1=1".
-			return (int) $wpdb->get_var( $sql );
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table bound with %i; $where is the static "flag_delete = 0".
+			return (int) $wpdb->get_var( $wpdb->prepare( $sql, $table ) );
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- values bound via $params.
-		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $params ) );
+		$args = array_merge( [ $table ], $params );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table bound with %i; $where is a placeholder string with every value in $params.
+		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $args ) );
 	}
 
 	/**
@@ -186,8 +187,7 @@ final class EmailLogRepository {
 		global $wpdb;
 
 		$table = $this->table();
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; range bound.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT status, COUNT(*) AS c FROM {$table} WHERE flag_delete = 0 AND date_time BETWEEN %s AND %s GROUP BY status", $from, $to ), ARRAY_A );
+		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT status, COUNT(*) AS c FROM %i WHERE flag_delete = 0 AND date_time BETWEEN %s AND %s GROUP BY status', $table, $from, $to ), ARRAY_A );
 
 		$sent   = 0;
 		$failed = 0;
@@ -217,8 +217,7 @@ final class EmailLogRepository {
 		global $wpdb;
 
 		$table = $this->table();
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; range bound.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE(date_time) AS d, status, COUNT(*) AS c FROM {$table} WHERE flag_delete = 0 AND date_time BETWEEN %s AND %s GROUP BY d, status", $from, $to ), ARRAY_A );
+		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT DATE(date_time) AS d, status, COUNT(*) AS c FROM %i WHERE flag_delete = 0 AND date_time BETWEEN %s AND %s GROUP BY d, status', $table, $from, $to ), ARRAY_A );
 
 		$out = [];
 		foreach ( is_array( $rows ) ? $rows : [] as $row ) {
@@ -251,8 +250,7 @@ final class EmailLogRepository {
 
 		$table = $this->table();
 		$limit = max( 1, min( 50, $limit ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; values bound.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT mailer, COUNT(*) AS c FROM {$table} WHERE flag_delete = 0 AND status = %d AND date_time BETWEEN %s AND %s GROUP BY mailer ORDER BY c DESC LIMIT %d", EmailLog::STATUS_SENT, $from, $to, $limit ), ARRAY_A );
+		$rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT mailer, COUNT(*) AS c FROM %i WHERE flag_delete = 0 AND status = %d AND date_time BETWEEN %s AND %s GROUP BY mailer ORDER BY c DESC LIMIT %d', $table, EmailLog::STATUS_SENT, $from, $to, $limit ), ARRAY_A );
 
 		return array_map(
 			static fn ( array $row ): array => [
@@ -278,8 +276,9 @@ final class EmailLogRepository {
 
 		$placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 		$table        = $this->table();
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders are %d, ids bound via prepare.
-		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE id IN ({$placeholders})", $ids ) );
+		$args         = array_merge( [ $table ], $ids );
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table bound with %i; the IN list is a run of %d placeholders with the ids bound via prepare.
+		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM %i WHERE id IN ({$placeholders})", $args ) );
 
 		return (int) $deleted;
 	}
@@ -295,10 +294,9 @@ final class EmailLogRepository {
 			return 0;
 		}
 
-		$cutoff = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
-		$table  = $this->table();
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; cutoff is bound.
-		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE date_time < %s", $cutoff ) );
+		$cutoff  = gmdate( 'Y-m-d H:i:s', time() - ( $days * DAY_IN_SECONDS ) );
+		$table   = $this->table();
+		$deleted = $wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE date_time < %s', $table, $cutoff ) );
 
 		return (int) $deleted;
 	}

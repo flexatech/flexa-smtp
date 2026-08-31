@@ -7,8 +7,8 @@ namespace Flexa\Smtp\Domain;
 defined( 'ABSPATH' ) || exit;
 
 // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-// Single data-access class for the open_events table. All values bound via
-// $wpdb->prepare(); only the table name (a constant) is interpolated.
+// Single data-access class for the open_events table. All values are bound via
+// $wpdb->prepare() (%s/%d) and every table identifier with %i (WP 6.2+).
 
 /**
  * Reads and writes for `flexa_smtp_open_events`. One row per (log) accumulates
@@ -37,8 +37,7 @@ final class OpenEventRepository {
 
 		if ( $existing instanceof OpenEvent ) {
 			$table = $this->table();
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; values bound.
-			$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET count = count + 1, date_time = %s WHERE id = %d", $now, $existing->id ) );
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET count = count + 1, date_time = %s WHERE id = %d', $table, $now, $existing->id ) );
 
 			return $existing->count + 1;
 		}
@@ -61,8 +60,7 @@ final class OpenEventRepository {
 		global $wpdb;
 
 		$table = $this->table();
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name only; log_id bound.
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE log_id = %d", $log_id ), ARRAY_A );
+		$row   = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE log_id = %d', $table, $log_id ), ARRAY_A );
 
 		return is_array( $row ) ? OpenEvent::from_row( $row ) : null;
 	}
@@ -84,8 +82,7 @@ final class OpenEventRepository {
 
 		$open = $this->table();
 		$logs = $wpdb->prefix . 'flexa_smtp_email_logs';
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only; range bound.
-		$row = $wpdb->get_row( $wpdb->prepare( "SELECT COALESCE(SUM(o.count),0) AS opens, COUNT(DISTINCT o.log_id) AS messages FROM {$open} o INNER JOIN {$logs} l ON l.id = o.log_id WHERE l.flag_delete = 0 AND l.date_time BETWEEN %s AND %s", $from, $to ), ARRAY_A );
+		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT COALESCE(SUM(o.count),0) AS opens, COUNT(DISTINCT o.log_id) AS messages FROM %i o INNER JOIN %i l ON l.id = o.log_id WHERE l.flag_delete = 0 AND l.date_time BETWEEN %s AND %s', $open, $logs, $from, $to ), ARRAY_A );
 
 		return [
 			'opens'    => (int) ( $row['opens'] ?? 0 ),
@@ -103,8 +100,7 @@ final class OpenEventRepository {
 
 		$open = $this->table();
 		$logs = $wpdb->prefix . 'flexa_smtp_email_logs';
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names only; range bound.
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT DATE(l.date_time) AS d, COALESCE(SUM(o.count),0) AS opens FROM {$open} o INNER JOIN {$logs} l ON l.id = o.log_id WHERE l.flag_delete = 0 AND l.date_time BETWEEN %s AND %s GROUP BY d", $from, $to ), ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT DATE(l.date_time) AS d, COALESCE(SUM(o.count),0) AS opens FROM %i o INNER JOIN %i l ON l.id = o.log_id WHERE l.flag_delete = 0 AND l.date_time BETWEEN %s AND %s GROUP BY d', $open, $logs, $from, $to ), ARRAY_A );
 
 		$out = [];
 		foreach ( is_array( $rows ) ? $rows : [] as $row ) {

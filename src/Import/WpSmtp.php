@@ -82,8 +82,7 @@ final class WpSmtp extends AbstractImporter {
 			return 0;
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- literal table name; no user input.
-		$rows = $wpdb->get_results( "SELECT * FROM {$table}", ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $table ), ARRAY_A );
 		if ( ! is_array( $rows ) || [] === $rows ) {
 			return 0;
 		}

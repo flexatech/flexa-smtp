@@ -3,7 +3,7 @@
  * Plugin Name:       Flexa SMTP
  * Description:       WP Mail SMTP with email logs, open/click tracking, and reports.
  * Version:           1.0.0
- * Requires at least: 5.9
+ * Requires at least: 6.2
  * Requires PHP:      8.2
  * Author:            FlexaTech
  * License:           GPL v2 or later

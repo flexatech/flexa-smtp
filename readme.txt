@@ -1,7 +1,7 @@
 === Flexa SMTP ===
 Contributors: flexatech
 Tags: smtp, wp mail smtp, email log, email tracking, mailer
-Requires at least: 5.9
+Requires at least: 6.2
 Tested up to: 6.7
 Requires PHP: 8.2
 Stable tag: 1.0.0
@@ -48,6 +48,35 @@ A dashboard widget and a Reports tab summarise delivery trends (sent vs. failed,
 = Import =
 
 Migrate settings and logs from WP Mail SMTP, Easy WP SMTP, SMTP Mailer, WP SMTP, or WP Mail Bank. Secrets are re-encrypted on import.
+
+== External services ==
+
+Flexa SMTP does not contact any external service on its own. It connects to a mail provider **only when you select and configure that provider as your mailer** (or connect it via OAuth). Each provider below is contacted solely to deliver the WordPress email you send. In every case the request happens when an email is sent, and the data transmitted is the outgoing message (recipients, subject, body, headers, and any attachments) together with the credentials you entered for that provider (sent as an authorization header). No data is sent to the plugin author, and no analytics or telemetry is collected.
+
+For the OAuth mailers (Gmail, Outlook, Zoho) there is an additional one-time authorization step: when you click "Connect", your browser is redirected to the provider's sign-in page, and the plugin then exchanges the returned authorization code for an access token over HTTPS. Tokens are stored encrypted and refreshed with the provider as needed.
+
+The Custom SMTP and IONOS mailers connect over SMTP to the host you configure (for IONOS, one of `smtp.ionos.com` / `.de` / `.es` / `.fr` / `.co.uk`); no third-party HTTP API is involved.
+
+API mailers (contacted at send time):
+
+* **SendGrid** — `https://api.sendgrid.com`. Terms: https://www.twilio.com/en-us/legal/tos — Privacy: https://www.twilio.com/en-us/legal/privacy
+* **Mailgun** — `https://api.mailgun.net` (or `https://api.eu.mailgun.net`). Terms: https://www.mailgun.com/legal/terms/ — Privacy: https://www.mailgun.com/legal/privacy-policy/
+* **Brevo** — `https://api.brevo.com`. Terms: https://www.brevo.com/legal/termsofuse/ — Privacy: https://www.brevo.com/legal/privacypolicy/
+* **Postmark** — `https://api.postmarkapp.com`. Terms: https://postmarkapp.com/terms-of-service — Privacy: https://postmarkapp.com/privacy-policy
+* **Mailjet** — `https://api.mailjet.com`. Terms: https://www.mailjet.com/legal/terms/ — Privacy: https://www.mailjet.com/legal/privacy-policy/
+* **SparkPost** (now part of Bird) — `https://api.sparkpost.com` (or `https://api.eu.sparkpost.com`). Terms: https://bird.com/en-us/legal/terms — Privacy: https://bird.com/en-us/legal/privacy
+* **SMTP.com** — `https://api.smtp.com`. Terms: https://www.smtp.com/policies/terms-conditions/ — Privacy: https://www.smtp.com/policies/privacy-policy/
+* **SendPulse** — `https://api.sendpulse.com` (an OAuth token is fetched from the same host before sending). Terms: https://sendpulse.com/legal/terms — Privacy: https://sendpulse.com/legal/pp
+* **Pepipost / Netcore** — `https://api.pepipost.com`. Terms: https://netcorecloud.com/terms-of-service/ — Privacy: https://netcorecloud.com/privacy-policy/
+* **Mandrill** — `https://mandrillapp.com`. Terms: https://mailchimp.com/legal/terms/ — Privacy: https://mailchimp.com/legal/privacy/
+* **Yournotify** — `https://api.yournotify.com`. Terms: https://yournotify.com/terms — Privacy: https://yournotify.com/privacy-policy/
+* **Amazon SES** — `https://email.{region}.amazonaws.com`. Terms: https://aws.amazon.com/service-terms/ — Privacy: https://aws.amazon.com/privacy/
+
+OAuth mailers (authorization + send):
+
+* **Gmail / Google Workspace** — `https://accounts.google.com`, `https://oauth2.googleapis.com`, `https://gmail.googleapis.com`. Terms: https://policies.google.com/terms — Privacy: https://policies.google.com/privacy
+* **Outlook / Microsoft 365** — `https://login.microsoftonline.com`, `https://graph.microsoft.com`. Terms: https://www.microsoft.com/servicesagreement — Privacy: https://privacy.microsoft.com/privacystatement
+* **Zoho Mail** — `https://accounts.zoho.{region}` and `https://mail.zoho.{region}` (region one of com/eu/in/com.au/jp). Terms: https://www.zoho.com/terms.html — Privacy: https://www.zoho.com/privacy.html
 
 == Installation ==
 

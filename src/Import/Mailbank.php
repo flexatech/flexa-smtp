@@ -104,8 +104,7 @@ final class Mailbank extends AbstractImporter {
 			return 0;
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- literal table name; no user input.
-		$rows = $wpdb->get_results( "SELECT * FROM {$table}", ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $table ), ARRAY_A );
 		if ( ! is_array( $rows ) || [] === $rows ) {
 			return 0;
 		}
@@ -150,8 +149,7 @@ final class Mailbank extends AbstractImporter {
 			return [];
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- literal table name; meta_key bound.
-		$raw = $wpdb->get_var( $wpdb->prepare( "SELECT meta_value FROM {$table} WHERE meta_key = %s", 'email_configuration' ) );
+		$raw = $wpdb->get_var( $wpdb->prepare( 'SELECT meta_value FROM %i WHERE meta_key = %s', $table, 'email_configuration' ) );
 		$val = is_string( $raw ) ? maybe_unserialize( $raw ) : $raw;
 
 		return is_array( $val ) ? $val : [];

@@ -293,8 +293,7 @@ abstract class AbstractImporter implements ImporterInterface {
 			return 0;
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- literal table name; no user input.
-		$rows = $wpdb->get_results( "SELECT * FROM {$logs_table}", ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $logs_table ), ARRAY_A );
 		if ( ! is_array( $rows ) || [] === $rows ) {
 			return 0;
 		}
@@ -345,14 +344,12 @@ abstract class AbstractImporter implements ImporterInterface {
 	private function import_wpms_events( string $events_table, int $source_log_id, int $log_id ): void {
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- literal table name; values bound.
-		$opened = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$events_table} WHERE email_log_id = %d AND event_type = %s", $source_log_id, 'open-email' ) );
+		$opened = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE email_log_id = %d AND event_type = %s', $events_table, $source_log_id, 'open-email' ) );
 		if ( (int) $opened > 0 ) {
 			$this->opens()->record( $log_id, [ 'imported_from' => $this->slug() ] );
 		}
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- literal table name; values bound.
-		$clicked = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$events_table} WHERE email_log_id = %d AND event_type = %s", $source_log_id, 'click-link' ) );
+		$clicked = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE email_log_id = %d AND event_type = %s', $events_table, $source_log_id, 'click-link' ) );
 		if ( (int) $clicked > 0 ) {
 			$this->clicks()->record( $log_id, '', [ 'imported_from' => $this->slug() ] );
 		}

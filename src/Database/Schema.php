@@ -102,8 +102,7 @@ final class Schema {
 
 		foreach ( self::TABLES as $table ) {
 			$name = $wpdb->prefix . $table;
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is a class constant, not user input; identifiers cannot be bound via prepare().
-			$wpdb->query( "DROP TABLE IF EXISTS {$name}" );
+			$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $name ) );
 		}
 
 		delete_option( self::VERSION_OPTION );
