@@ -3,10 +3,13 @@ import {
     Clock,
     Download,
     Eye,
+    Lightbulb,
     MousePointerClick,
+    RotateCw,
     Search,
+    Wrench,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -19,10 +22,16 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/cn";
 import { __, sprintf } from "@/lib/i18n";
+import { useUiStore } from "@/lib/store";
 import { getPluginGlobal } from "@/lib/wp";
-import { useLogDetail, useLogs } from "@/features/logs/useLogs";
+import {
+    type Diagnosis,
+    type LogDetail,
+    useLogDetail,
+    useLogs,
+} from "@/features/logs/useLogs";
 import { ROW_DIVIDER, SettingRow, ToggleRow } from "../SettingRow";
-import { mailerLabel, type TabProps } from "../types";
+import { CATEGORY_LABELS, categoryLabel, mailerLabel, type TabProps } from "../types";
 
 const PER_PAGE = 20;
 
@@ -48,6 +57,93 @@ function StatusBadge({ status }: { status: number }) {
         >
             {s.label}
         </span>
+    );
+}
+
+function DiagnosisBlock({ diagnosis }: { diagnosis: Diagnosis }) {
+    return (
+        <div className="fs:rounded-md fs:border fs:border-amber-200 fs:bg-amber-50 fs:p-3">
+            <div className="fs:flex fs:items-center fs:gap-2">
+                <Lightbulb
+                    className="fs:h-4 fs:w-4 fs:text-amber-600"
+                    aria-hidden
+                />
+                <span className="fs:text-sm fs:font-semibold fs:text-amber-900">
+                    {__("Why it failed")}
+                </span>
+                <span className="fs:rounded fs:bg-amber-100 fs:px-1.5 fs:py-0.5 fs:text-xs fs:font-medium fs:text-amber-800">
+                    {categoryLabel(diagnosis.category)}
+                </span>
+                <span
+                    className={cn(
+                        "fs:inline-flex fs:items-center fs:gap-1 fs:rounded fs:px-1.5 fs:py-0.5 fs:text-xs fs:font-medium",
+                        diagnosis.retryable
+                            ? "fs:bg-emerald-100 fs:text-emerald-800"
+                            : "fs:bg-slate-200 fs:text-slate-700",
+                    )}
+                >
+                    <RotateCw className="fs:h-3 fs:w-3" aria-hidden />
+                    {diagnosis.retryable
+                        ? __("Safe to retry")
+                        : __("Do not auto-retry")}
+                </span>
+            </div>
+            <p className="fs:mt-2 fs:text-sm fs:text-amber-900">
+                {diagnosis.explanation}
+            </p>
+            {diagnosis.action && (
+                <p className="fs:mt-1.5 fs:text-sm fs:text-amber-800">
+                    <span className="fs:font-medium">
+                        {__("What to do:")}
+                    </span>{" "}
+                    {diagnosis.action}
+                </p>
+            )}
+        </div>
+    );
+}
+
+function TechnicalBlock({ d }: { d: LogDetail }) {
+    const rows: Array<[string, string]> = [];
+    if (d.response_code) rows.push([__("Response code"), d.response_code]);
+    if (d.provider_message_id)
+        rows.push([__("Provider message ID"), d.provider_message_id]);
+    if (d.duration_ms > 0)
+        rows.push([__("Send duration"), sprintf(__("%d ms"), d.duration_ms)]);
+    if (d.retry_count > 0)
+        rows.push([__("Retry count"), String(d.retry_count)]);
+    if (d.source) rows.push([__("Source"), d.source]);
+    if (d.content_type) rows.push([__("Content type"), d.content_type]);
+
+    const technical = d.diagnosis?.technical ?? "";
+    if (rows.length === 0 && !technical && !d.reason_error) {
+        return null;
+    }
+
+    return (
+        <div>
+            <div className="fs:flex fs:items-center fs:gap-1.5 fs:text-xs fs:font-semibold fs:uppercase fs:tracking-wide fs:text-slate-500">
+                <Wrench className="fs:h-3.5 fs:w-3.5" aria-hidden />
+                {__("Technical details")}
+            </div>
+            {rows.length > 0 && (
+                <dl className="fs:mt-1.5 fs:grid fs:grid-cols-[auto_1fr] fs:gap-x-4 fs:gap-y-1 fs:text-xs">
+                    {rows.map(([k, v]) => (
+                        <div key={k} className="fs:contents">
+                            <dt className="fs:text-slate-500">{k}</dt>
+                            <dd className="fs:break-all fs:text-slate-700">
+                                {v}
+                            </dd>
+                        </div>
+                    ))}
+                </dl>
+            )}
+            {(technical || d.reason_error) && (
+                <pre className="fs:mt-2 fs:max-h-40 fs:overflow-auto fs:whitespace-pre-wrap fs:break-words fs:rounded-md fs:bg-slate-900 fs:p-3 fs:text-xs fs:text-slate-100">
+                    {technical || d.reason_error}
+                </pre>
+            )}
+        </div>
     );
 }
 
@@ -105,7 +201,10 @@ function LogDetailDialog({
                             </div>
                         </div>
 
-                        {d.status === 0 && d.reason_error && (
+                        {d.status === 0 && d.diagnosis && (
+                            <DiagnosisBlock diagnosis={d.diagnosis} />
+                        )}
+                        {d.status === 0 && !d.diagnosis && d.reason_error && (
                             <div className="fs:rounded-md fs:bg-red-50 fs:p-3 fs:text-red-700 fs:ring-1 fs:ring-red-200">
                                 {d.reason_error}
                             </div>
@@ -154,6 +253,8 @@ function LogDetailDialog({
                                 {d.body_content || "—"}
                             </pre>
                         </div>
+
+                        <TechnicalBlock d={d} />
                     </div>
                 )}
             </DialogContent>
@@ -168,8 +269,23 @@ export function LogsTab({ form, setField }: TabProps) {
     const [mailer, setMailer] = useState("");
     const [page, setPage] = useState(1);
     const [selected, setSelected] = useState<number | null>(null);
+    // The category filter lives in the store so the Overview can deep-link into it.
+    const category = useUiStore((s) => s.logCategory);
+    const setCategory = useUiStore((s) => s.setLogCategory);
 
-    const logs = useLogs({ page, per_page: PER_PAGE, search, status, mailer });
+    // Reset to the first page whenever the category deep-link changes.
+    useEffect(() => {
+        setPage(1);
+    }, [category]);
+
+    const logs = useLogs({
+        page,
+        per_page: PER_PAGE,
+        search,
+        status,
+        mailer,
+        error_category: category,
+    });
     const total = logs.data?.total ?? 0;
     const pages = Math.max(1, Math.ceil(total / PER_PAGE));
 
@@ -178,11 +294,20 @@ export function LogsTab({ form, setField }: TabProps) {
         ...Object.keys(schema).map((s) => ({ value: s, label: mailerLabel(s) })),
     ];
 
+    const categoryOptions = [
+        { value: "", label: __("All causes") },
+        ...Object.keys(CATEGORY_LABELS).map((c) => ({
+            value: c,
+            label: categoryLabel(c),
+        })),
+    ];
+
     const exportUrl = () => {
         const p = new URLSearchParams();
         if (search) p.set("search", search);
         if (status !== "") p.set("status", status);
         if (mailer) p.set("mailer", mailer);
+        if (category) p.set("error_category", category);
         p.set("_wpnonce", restNonce);
         return `${restUrl.replace(/\/$/, "")}/logs/export?${p.toString()}`;
     };
@@ -238,7 +363,10 @@ export function LogsTab({ form, setField }: TabProps) {
                                 setPage(1);
                             }}
                             placeholder={__("Search subject, from, or to…")}
-                            className="fs:pl-8"
+                            // Inline padding beats WP admin's input[type=text]
+                            // rule (higher specificity than a Tailwind utility),
+                            // which would otherwise slide the text under the icon.
+                            style={{ paddingLeft: "2.25rem" }}
                         />
                     </div>
                     <Select
@@ -261,6 +389,11 @@ export function LogsTab({ form, setField }: TabProps) {
                         }}
                         options={mailerOptions}
                     />
+                    <Select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        options={categoryOptions}
+                    />
                     <Button variant="outline" asChild>
                         <a href={exportUrl()}>
                             <Download className="fs:h-4 fs:w-4" aria-hidden />
@@ -269,8 +402,8 @@ export function LogsTab({ form, setField }: TabProps) {
                     </Button>
                 </div>
 
-                <div className="fs:overflow-hidden fs:rounded-lg fs:border fs:border-slate-200">
-                    <table className="fs:w-full fs:text-left fs:text-sm">
+                <div className="fs:overflow-x-auto fs:rounded-lg fs:border fs:border-slate-200">
+                    <table className="fs:w-full fs:min-w-[40rem] fs:text-left fs:text-sm">
                         <thead className="fs:bg-slate-50 fs:text-xs fs:uppercase fs:tracking-wide fs:text-slate-500">
                             <tr>
                                 <th className="fs:px-3 fs:py-2 fs:font-medium">

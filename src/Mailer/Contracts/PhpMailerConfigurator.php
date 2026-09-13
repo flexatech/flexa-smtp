@@ -14,6 +14,6 @@ defined( 'ABSPATH' ) || exit;
  * {@see configure()} on the live PHPMailer instance right before letting it send,
  * instead of routing the message through an HTTP API.
  */
-interface ConfiguresPhpMailer {
+interface PhpMailerConfigurator {
 	public function configure( PHPMailer $php ): void;
 }

@@ -27,6 +27,7 @@ final class SourceDetector {
 		$mu_dir     = defined( 'WPMU_PLUGIN_DIR' ) ? wp_normalize_path( WPMU_PLUGIN_DIR ) : '';
 		$theme_root = wp_normalize_path( get_theme_root() );
 
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- inspects the call stack to attribute the outgoing email to the plugin/theme that triggered it; not debug logging.
 		foreach ( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ) as $frame ) {
 			if ( empty( $frame['file'] ) ) {
 				continue;

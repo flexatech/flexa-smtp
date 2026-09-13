@@ -37,7 +37,9 @@ final class EmailLogRepository {
 	 * @param array{
 	 *   subject?:string, email_from?:string, email_to?:list<array{address:string,name:string}>|string,
 	 *   mailer?:string, status?:int, content_type?:string, body_content?:string,
-	 *   reason_error?:string, source?:string, extra_info?:mixed, date_time?:string
+	 *   reason_error?:string, source?:string, extra_info?:mixed, date_time?:string,
+	 *   error_category?:string, response_code?:string, provider_message_id?:string,
+	 *   duration_ms?:int, retry_count?:int, idempotency_key?:string
 	 * } $data
 	 */
 	public function create( array $data ): int {
@@ -47,24 +49,30 @@ final class EmailLogRepository {
 		$extra = $data['extra_info'] ?? [];
 
 		$row = [
-			'subject'      => (string) ( $data['subject'] ?? '' ),
-			'email_from'   => (string) ( $data['email_from'] ?? '' ),
-			'email_to'     => maybe_serialize( is_array( $to ) ? $to : [] ),
-			'mailer'       => (string) ( $data['mailer'] ?? '' ),
-			'status'       => (int) ( $data['status'] ?? 0 ),
-			'content_type' => (string) ( $data['content_type'] ?? '' ),
-			'body_content' => (string) ( $data['body_content'] ?? '' ),
-			'reason_error' => (string) ( $data['reason_error'] ?? '' ),
-			'source'       => (string) ( $data['source'] ?? '' ),
-			'extra_info'   => is_array( $extra ) ? (string) wp_json_encode( $extra ) : '',
-			'flag_delete'  => 0,
-			'date_time'    => (string) ( $data['date_time'] ?? current_time( 'mysql' ) ),
+			'subject'             => (string) ( $data['subject'] ?? '' ),
+			'email_from'          => (string) ( $data['email_from'] ?? '' ),
+			'email_to'            => maybe_serialize( is_array( $to ) ? $to : [] ),
+			'mailer'              => (string) ( $data['mailer'] ?? '' ),
+			'status'              => (int) ( $data['status'] ?? 0 ),
+			'content_type'        => (string) ( $data['content_type'] ?? '' ),
+			'body_content'        => (string) ( $data['body_content'] ?? '' ),
+			'reason_error'        => (string) ( $data['reason_error'] ?? '' ),
+			'source'              => (string) ( $data['source'] ?? '' ),
+			'extra_info'          => is_array( $extra ) ? (string) wp_json_encode( $extra ) : '',
+			'error_category'      => (string) ( $data['error_category'] ?? '' ),
+			'response_code'       => (string) ( $data['response_code'] ?? '' ),
+			'provider_message_id' => (string) ( $data['provider_message_id'] ?? '' ),
+			'duration_ms'         => (int) ( $data['duration_ms'] ?? 0 ),
+			'retry_count'         => (int) ( $data['retry_count'] ?? 0 ),
+			'idempotency_key'     => (string) ( $data['idempotency_key'] ?? '' ),
+			'flag_delete'         => 0,
+			'date_time'           => (string) ( $data['date_time'] ?? current_time( 'mysql' ) ),
 		];
 
 		$ok = $wpdb->insert(
 			$this->table(),
 			$row,
-			[ '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s' ]
+			[ '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%d', '%s' ]
 		);
 
 		return $ok ? (int) $wpdb->insert_id : 0;
@@ -75,7 +83,7 @@ final class EmailLogRepository {
 	 * SENT/FAILED outcome once the transport reports back. Only the keys present
 	 * in $data are touched.
 	 *
-	 * @param array{status?:int, mailer?:string, reason_error?:string, body_content?:string, extra_info?:mixed} $data
+	 * @param array{status?:int, mailer?:string, reason_error?:string, body_content?:string, extra_info?:mixed, error_category?:string, response_code?:string, provider_message_id?:string, duration_ms?:int, retry_count?:int} $data
 	 */
 	public function update( int $id, array $data ): bool {
 		global $wpdb;
@@ -105,6 +113,26 @@ final class EmailLogRepository {
 		if ( array_key_exists( 'extra_info', $data ) ) {
 			$row['extra_info'] = is_array( $data['extra_info'] ) ? (string) wp_json_encode( $data['extra_info'] ) : '';
 			$formats[]         = '%s';
+		}
+		if ( array_key_exists( 'error_category', $data ) ) {
+			$row['error_category'] = (string) $data['error_category'];
+			$formats[]             = '%s';
+		}
+		if ( array_key_exists( 'response_code', $data ) ) {
+			$row['response_code'] = (string) $data['response_code'];
+			$formats[]            = '%s';
+		}
+		if ( array_key_exists( 'provider_message_id', $data ) ) {
+			$row['provider_message_id'] = (string) $data['provider_message_id'];
+			$formats[]                  = '%s';
+		}
+		if ( array_key_exists( 'duration_ms', $data ) ) {
+			$row['duration_ms'] = (int) $data['duration_ms'];
+			$formats[]          = '%d';
+		}
+		if ( array_key_exists( 'retry_count', $data ) ) {
+			$row['retry_count'] = (int) $data['retry_count'];
+			$formats[]          = '%d';
 		}
 
 		if ( [] === $row ) {
@@ -144,7 +172,7 @@ final class EmailLogRepository {
 
 		$args = array_merge( [ $table ], $params, [ $orderby, $limit, $offset ] );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table/orderby bound with %i, values with %s/%d; only $where (a placeholder string) and the whitelisted ASC/DESC direction are interpolated.
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- table/orderby bound with %i, values with %s/%d; only $where (a placeholder string) and the whitelisted ASC/DESC direction are interpolated.
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
 		if ( ! is_array( $rows ) ) {
 			return [];
@@ -168,12 +196,12 @@ final class EmailLogRepository {
 		$sql   = "SELECT COUNT(*) FROM %i WHERE {$where}";
 
 		if ( [] === $params ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table bound with %i; $where is the static "flag_delete = 0".
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- table bound with %i; $where is the static "flag_delete = 0".
 			return (int) $wpdb->get_var( $wpdb->prepare( $sql, $table ) );
 		}
 
 		$args = array_merge( [ $table ], $params );
-		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table bound with %i; $where is a placeholder string with every value in $params.
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- table bound with %i; $where is a placeholder string with every value in $params.
 		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $args ) );
 	}
 
@@ -262,6 +290,91 @@ final class EmailLogRepository {
 	}
 
 	/**
+	 * Per-mailer delivery metrics for a range: how many sent vs failed, the average
+	 * send duration, and when each mailer last succeeded/failed. Feeds the provider
+	 * monitoring view. These are this site's own numbers, not provider-wide status.
+	 *
+	 * @return list<array{mailer:string, sent:int, failed:int, total:int, avg_duration_ms:int, last_sent_at:string, last_failed_at:string}>
+	 */
+	public function provider_stats( string $from, string $to ): array {
+		global $wpdb;
+
+		$table = $this->table();
+		$rows  = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT mailer,
+					SUM(CASE WHEN status = %d THEN 1 ELSE 0 END) AS sent,
+					SUM(CASE WHEN status = %d THEN 1 ELSE 0 END) AS failed,
+					COUNT(*) AS total,
+					AVG(NULLIF(duration_ms, 0)) AS avg_ms,
+					MAX(CASE WHEN status = %d THEN date_time END) AS last_sent,
+					MAX(CASE WHEN status = %d THEN date_time END) AS last_failed
+				FROM %i
+				WHERE flag_delete = 0 AND date_time BETWEEN %s AND %s
+				GROUP BY mailer
+				ORDER BY total DESC',
+				EmailLog::STATUS_SENT,
+				EmailLog::STATUS_FAILED,
+				EmailLog::STATUS_SENT,
+				EmailLog::STATUS_FAILED,
+				$table,
+				$from,
+				$to
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			static fn ( array $row ): array => [
+				'mailer'          => (string) ( $row['mailer'] ?? '' ),
+				'sent'            => (int) ( $row['sent'] ?? 0 ),
+				'failed'          => (int) ( $row['failed'] ?? 0 ),
+				'total'           => (int) ( $row['total'] ?? 0 ),
+				'avg_duration_ms' => (int) round( (float) ( $row['avg_ms'] ?? 0 ) ),
+				'last_sent_at'    => (string) ( $row['last_sent'] ?? '' ),
+				'last_failed_at'  => (string) ( $row['last_failed'] ?? '' ),
+			],
+			is_array( $rows ) ? $rows : []
+		);
+	}
+
+	/**
+	 * Count of failed rows grouped by diagnosis category for a range, biggest
+	 * first. Rows with no category (e.g. legacy pre-diagnostics failures) are
+	 * skipped. Powers the "why are messages failing" breakdown.
+	 *
+	 * @return list<array{category:string, count:int}>
+	 */
+	public function category_counts( string $from, string $to ): array {
+		global $wpdb;
+
+		$table = $this->table();
+		$rows  = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT error_category AS category, COUNT(*) AS c
+				FROM %i
+				WHERE flag_delete = 0 AND status = %d AND error_category <> ''
+					AND date_time BETWEEN %s AND %s
+				GROUP BY error_category
+				ORDER BY c DESC",
+				$table,
+				EmailLog::STATUS_FAILED,
+				$from,
+				$to
+			),
+			ARRAY_A
+		);
+
+		return array_map(
+			static fn ( array $row ): array => [
+				'category' => (string) ( $row['category'] ?? '' ),
+				'count'    => (int) ( $row['c'] ?? 0 ),
+			],
+			is_array( $rows ) ? $rows : []
+		);
+	}
+
+	/**
 	 * Hard-delete rows by id. Returns the number of rows removed.
 	 *
 	 * @param list<int> $ids
@@ -323,6 +436,11 @@ final class EmailLogRepository {
 		if ( ! empty( $args['mailer'] ) && is_string( $args['mailer'] ) ) {
 			$clauses[] = 'mailer = %s';
 			$params[]  = $args['mailer'];
+		}
+
+		if ( ! empty( $args['error_category'] ) && is_string( $args['error_category'] ) ) {
+			$clauses[] = 'error_category = %s';
+			$params[]  = $args['error_category'];
 		}
 
 		if ( ! empty( $args['date_from'] ) && is_string( $args['date_from'] ) ) {

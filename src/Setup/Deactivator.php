@@ -13,16 +13,22 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Deactivator {
 	public static function deactivate(): void {
-		// Clear any scheduled cron events registered by Reports\Scheduler (WP7).
+		// Clear any scheduled cron events registered by Reports\Scheduler (WP7),
+		// HealthChecker (DL2), and the delivery queue (DL4).
 		foreach ( [
 			'flexa_smtp_retention',
 			'flexa_smtp_report_weekly',
 			'flexa_smtp_report_monthly',
+			'flexa_smtp_health',
+			'flexa_smtp_queue_run',
+			'flexa_smtp_queue_tick',
 		] as $hook ) {
-			$timestamp = wp_next_scheduled( $hook );
-			if ( false !== $timestamp ) {
-				wp_unschedule_event( $timestamp, $hook );
-			}
+			wp_clear_scheduled_hook( $hook );
+		}
+
+		// Drop any pending Action Scheduler runs of the queue worker, if present.
+		if ( function_exists( 'as_unschedule_all_actions' ) ) {
+			as_unschedule_all_actions( 'flexa_smtp_queue_run', [], 'flexa-smtp' );
 		}
 	}
 }

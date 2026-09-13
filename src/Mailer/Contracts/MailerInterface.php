@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Every mailer (transport or API provider) implements this. Transport mailers
- * (SMTP, native PHP mail) also implement {@see ConfiguresPhpMailer} and let
+ * (SMTP, native PHP mail) also implement {@see PhpMailerConfigurator} and let
  * PHPMailer perform the actual send, so their {@see send()} is never invoked by
  * {@see \Flexa\Smtp\Mailer\MailerManager}. API providers (WP3) do the real work
  * inside {@see send()}.

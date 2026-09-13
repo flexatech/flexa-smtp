@@ -26,6 +26,10 @@ final class Router {
 		( new SettingsEndpoint() )->register_routes();
 		( new TestMailEndpoint() )->register_routes();
 		( new LogsEndpoint() )->register_routes();
+		( new DiagnosticsEndpoint() )->register_routes();
+		( new HealthEndpoint() )->register_routes();
+		( new MonitoringEndpoint() )->register_routes();
+		( new QueueEndpoint() )->register_routes();
 		( new OAuthEndpoint() )->register_routes();
 		( new TrackingEndpoint() )->register_routes();
 		( new ResetEndpoint() )->register_routes();

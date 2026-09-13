@@ -25,6 +25,9 @@ export interface SettingsData {
     enable_weekly_report: boolean;
     enable_monthly_report: boolean;
     report_recipients: string;
+    enable_queue: boolean;
+    enable_retry: boolean;
+    queue_max_attempts: number;
     mailers: Record<string, MailerValues>;
 }
 

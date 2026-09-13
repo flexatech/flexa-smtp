@@ -42,14 +42,33 @@ final class MailLogger {
 	 */
 	private array $errors = [];
 
+	/**
+	 * Meta from the last failed attempt (diagnosis, response_code, duration_ms),
+	 * used when settling a fully-failed dispatch.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private array $last_failure_meta = [];
+
 	private ?EmailLogRepository $repository = null;
 
 	public function register(): void {
 		add_action( 'flexa_smtp.mail.before_send', [ $this, 'on_before_send' ], 10, 2 );
 		add_action( 'flexa_smtp.mail.failed', [ $this, 'on_failed' ], 10, 4 );
 		add_action( 'flexa_smtp.mail.sent', [ $this, 'on_sent' ], 10, 3 );
+		// Fires when the opt-in queue takes ownership of the in-flight message (DL4).
+		add_action( 'flexa_smtp.mail.queued', [ $this, 'on_queued' ], 10, 2 );
 		// Fires when MailerManager re-throws after the whole chain fails.
 		add_action( 'wp_mail_failed', [ $this, 'on_wp_mail_failed' ], 5 );
+	}
+
+	/**
+	 * The id of the log row created for the in-flight message on before_send, or 0
+	 * when nothing is pending / logging is off. Lets the queue link its row to the
+	 * observability record without owning the logging lifecycle.
+	 */
+	public function current_log_id(): int {
+		return null !== $this->pending ? (int) ( $this->pending['id'] ?? 0 ) : 0;
 	}
 
 	/**
@@ -70,22 +89,24 @@ final class MailLogger {
 			return;
 		}
 
-		$this->errors   = [];
-		$snapshot       = $this->snapshot( $php );
-		$snapshot['id'] = $this->repo()->create(
+		$this->errors            = [];
+		$this->last_failure_meta = [];
+		$snapshot                = $this->snapshot( $php );
+		$snapshot['id']          = $this->repo()->create(
 			[
-				'subject'      => (string) $snapshot['subject'],
-				'email_from'   => (string) $snapshot['from'],
-				'email_to'     => $snapshot['to'],
-				'mailer'       => (string) $snapshot['mailer_hint'],
-				'status'       => EmailLog::STATUS_PENDING,
-				'content_type' => (string) $snapshot['content_type'],
-				'body_content' => (string) $snapshot['body'],
-				'source'       => (string) $snapshot['source'],
-				'extra_info'   => $snapshot['extra'],
+				'subject'         => (string) $snapshot['subject'],
+				'email_from'      => (string) $snapshot['from'],
+				'email_to'        => $snapshot['to'],
+				'mailer'          => (string) $snapshot['mailer_hint'],
+				'status'          => EmailLog::STATUS_PENDING,
+				'content_type'    => (string) $snapshot['content_type'],
+				'body_content'    => (string) $snapshot['body'],
+				'source'          => (string) $snapshot['source'],
+				'extra_info'      => $snapshot['extra'],
+				'idempotency_key' => (string) $snapshot['idempotency_key'],
 			]
 		);
-		$this->pending  = $snapshot;
+		$this->pending           = $snapshot;
 
 		if ( (int) $snapshot['id'] > 0 ) {
 			/**
@@ -108,7 +129,7 @@ final class MailLogger {
 	 * @param mixed $meta
 	 */
 	public function on_failed( $php, $slug, $error, $meta ): void {
-		unset( $php, $meta );
+		unset( $php );
 
 		if ( null === $this->pending ) {
 			return;
@@ -117,7 +138,8 @@ final class MailLogger {
 		$error = is_string( $error ) ? $error : '';
 		$slug  = is_string( $slug ) ? $slug : '';
 
-		$this->errors[] = '' !== $slug ? sprintf( '[%s] %s', $slug, $error ) : $error;
+		$this->errors[]          = '' !== $slug ? sprintf( '[%s] %s', $slug, $error ) : $error;
+		$this->last_failure_meta = is_array( $meta ) ? $meta : [];
 	}
 
 	/**
@@ -147,7 +169,48 @@ final class MailLogger {
 			EmailLog::STATUS_SENT,
 			is_string( $slug ) && '' !== $slug ? $slug : (string) $snapshot['mailer_hint'],
 			'',
-			$extra
+			$extra,
+			$this->delivery_fields( $meta )
+		);
+	}
+
+	/**
+	 * Settle the pending row when the queue takes ownership of the message. The
+	 * status tells us which outcome to record: QUEUED (awaiting first send),
+	 * RETRYING (a synchronous attempt failed and a retry is queued), or CANCELLED
+	 * (a duplicate that was deduped). The queue worker settles the row to
+	 * SENT/FAILED later.
+	 *
+	 * @param mixed $php
+	 * @param mixed $status
+	 */
+	public function on_queued( $php, $status ): void {
+		unset( $php );
+
+		if ( null === $this->pending ) {
+			return;
+		}
+
+		$status        = (int) $status;
+		$snapshot      = $this->pending;
+		$this->pending = null;
+
+		$reason = '';
+		$fields = [];
+		if ( EmailLog::STATUS_RETRYING === $status && [] !== $this->errors ) {
+			$reason = implode( ' | ', $this->errors );
+			$fields = $this->delivery_fields( $this->last_failure_meta );
+		} elseif ( EmailLog::STATUS_CANCELLED === $status ) {
+			$reason = __( 'Skipped: an identical message was already queued.', 'flexa-smtp' );
+		}
+
+		$this->settle(
+			$snapshot,
+			$status,
+			(string) $snapshot['mailer_hint'],
+			$reason,
+			$snapshot['extra'],
+			$fields
 		);
 	}
 
@@ -169,7 +232,14 @@ final class MailLogger {
 			? implode( ' | ', $this->errors )
 			: __( 'The message could not be sent.', 'flexa-smtp' );
 
-		$this->settle( $snapshot, EmailLog::STATUS_FAILED, (string) $snapshot['mailer_hint'], $reason, $snapshot['extra'] );
+		$this->settle(
+			$snapshot,
+			EmailLog::STATUS_FAILED,
+			(string) $snapshot['mailer_hint'],
+			$reason,
+			$snapshot['extra'],
+			$this->delivery_fields( $this->last_failure_meta )
+		);
 	}
 
 	/**
@@ -177,8 +247,10 @@ final class MailLogger {
 	 *
 	 * @param array<string, mixed> $snapshot
 	 * @param array<string, mixed> $extra
+	 * @param array<string, mixed> $fields  Extra columns from the DeliveryResult
+	 *                                       (error_category, response_code, ...).
 	 */
-	private function settle( array $snapshot, int $status, string $mailer, string $reason, array $extra ): void {
+	private function settle( array $snapshot, int $status, string $mailer, string $reason, array $extra, array $fields = [] ): void {
 		$id = (int) ( $snapshot['id'] ?? 0 );
 		if ( $id <= 0 ) {
 			return;
@@ -191,8 +263,35 @@ final class MailLogger {
 				'mailer'       => '' !== $mailer ? $mailer : (string) $snapshot['mailer_hint'],
 				'reason_error' => $reason,
 				'extra_info'   => $extra,
-			]
+			] + $fields
 		);
+	}
+
+	/**
+	 * Map the DeliveryResult meta (as flattened by Result::to_meta()) to the log
+	 * columns, keeping only the keys that are present so we never overwrite a value
+	 * with an empty default.
+	 *
+	 * @param array<string, mixed> $meta
+	 * @return array<string, mixed>
+	 */
+	private function delivery_fields( array $meta ): array {
+		$fields = [];
+
+		if ( isset( $meta['error_category'] ) && is_string( $meta['error_category'] ) ) {
+			$fields['error_category'] = $meta['error_category'];
+		}
+		if ( isset( $meta['response_code'] ) && is_scalar( $meta['response_code'] ) ) {
+			$fields['response_code'] = (string) $meta['response_code'];
+		}
+		if ( isset( $meta['provider_message_id'] ) && is_scalar( $meta['provider_message_id'] ) ) {
+			$fields['provider_message_id'] = (string) $meta['provider_message_id'];
+		}
+		if ( isset( $meta['duration_ms'] ) && is_numeric( $meta['duration_ms'] ) ) {
+			$fields['duration_ms'] = (int) $meta['duration_ms'];
+		}
+
+		return $fields;
 	}
 
 	/**
@@ -214,17 +313,37 @@ final class MailLogger {
 			$extra['bcc'] = $bcc;
 		}
 
+		$subject = (string) $php->Subject;
+		$from    = (string) $php->From;
+		$body    = (string) $php->Body;
+
 		return [
-			'subject'      => (string) $php->Subject,
-			'from'         => (string) $php->From,
-			'from_name'    => (string) $php->FromName,
-			'to'           => $to,
-			'content_type' => (string) $php->ContentType,
-			'body'         => (string) $php->Body,
-			'source'       => SourceDetector::detect(),
-			'mailer_hint'  => (string) Settings::get( 'current_mailer' ),
-			'extra'        => $extra,
+			'subject'         => $subject,
+			'from'            => $from,
+			'from_name'       => (string) $php->FromName,
+			'to'              => $to,
+			'content_type'    => (string) $php->ContentType,
+			'body'            => $body,
+			'source'          => SourceDetector::detect(),
+			'mailer_hint'     => (string) Settings::get( 'current_mailer' ),
+			'extra'           => $extra,
+			'idempotency_key' => $this->idempotency_key( $from, $to, $subject, $body ),
 		];
+	}
+
+	/**
+	 * A stable fingerprint of a message (sender, recipients, subject, body) so the
+	 * queue/retry engine (DL4) can recognise the same email and avoid sending it
+	 * twice. Recorded now, in DL1, because it is cheap and must be captured at send
+	 * time. Body is hashed rather than included whole to keep the key bounded.
+	 *
+	 * @param list<array{address:string, name:string}> $to
+	 */
+	private function idempotency_key( string $from, array $to, string $subject, string $body ): string {
+		$recipients = implode( ',', array_map( static fn ( array $r ): string => (string) $r['address'], $to ) );
+		$material   = implode( '|', [ $from, $recipients, $subject, md5( $body ) ] );
+
+		return hash( 'sha256', $material );
 	}
 
 	/**

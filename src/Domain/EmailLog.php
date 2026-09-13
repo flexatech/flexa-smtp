@@ -19,6 +19,11 @@ final class EmailLog {
 	// Because wp_mail() is synchronous the row is updated to SENT/FAILED within
 	// the same request; it only lingers if the request dies mid-send.
 	public const STATUS_PENDING = 2;
+	// Reserved for the opt-in queue/retry engine (DL4). Declared now so the schema
+	// and consumers share one vocabulary; the synchronous path never sets them.
+	public const STATUS_QUEUED    = 3;
+	public const STATUS_RETRYING  = 4;
+	public const STATUS_CANCELLED = 5;
 
 	/**
 	 * @param list<array{address:string, name:string}> $email_to
@@ -38,6 +43,12 @@ final class EmailLog {
 		public readonly array $extra_info,
 		public readonly bool $flag_delete,
 		public readonly string $date_time,
+		public readonly string $error_category,
+		public readonly string $response_code,
+		public readonly string $provider_message_id,
+		public readonly int $duration_ms,
+		public readonly int $retry_count,
+		public readonly string $idempotency_key,
 	) {}
 
 	/**
@@ -58,6 +69,12 @@ final class EmailLog {
 			extra_info: self::decode_extra( $row['extra_info'] ?? '' ),
 			flag_delete: (bool) ( $row['flag_delete'] ?? 0 ),
 			date_time: (string) ( $row['date_time'] ?? '' ),
+			error_category: (string) ( $row['error_category'] ?? '' ),
+			response_code: (string) ( $row['response_code'] ?? '' ),
+			provider_message_id: (string) ( $row['provider_message_id'] ?? '' ),
+			duration_ms: (int) ( $row['duration_ms'] ?? 0 ),
+			retry_count: (int) ( $row['retry_count'] ?? 0 ),
+			idempotency_key: (string) ( $row['idempotency_key'] ?? '' ),
 		);
 	}
 
@@ -69,18 +86,23 @@ final class EmailLog {
 	 */
 	public function to_array(): array {
 		$data = [
-			'id'           => $this->id,
-			'subject'      => $this->subject,
-			'from'         => $this->email_from,
-			'to'           => $this->email_to,
-			'mailer'       => $this->mailer,
-			'status'       => $this->status,
-			'sent'         => self::STATUS_SENT === $this->status,
-			'content_type' => $this->content_type,
-			'reason_error' => $this->reason_error,
-			'source'       => $this->source,
-			'extra_info'   => $this->extra_info,
-			'date_time'    => $this->date_time,
+			'id'                  => $this->id,
+			'subject'             => $this->subject,
+			'from'                => $this->email_from,
+			'to'                  => $this->email_to,
+			'mailer'              => $this->mailer,
+			'status'              => $this->status,
+			'sent'                => self::STATUS_SENT === $this->status,
+			'content_type'        => $this->content_type,
+			'reason_error'        => $this->reason_error,
+			'source'              => $this->source,
+			'extra_info'          => $this->extra_info,
+			'date_time'           => $this->date_time,
+			'error_category'      => $this->error_category,
+			'response_code'       => $this->response_code,
+			'provider_message_id' => $this->provider_message_id,
+			'duration_ms'         => $this->duration_ms,
+			'retry_count'         => $this->retry_count,
 		];
 
 		/**

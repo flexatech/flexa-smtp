@@ -111,13 +111,75 @@ abstract class AbstractApiMailer implements MailerInterface, ProvidesCredentialS
 		);
 
 		if ( is_wp_error( $response ) ) {
+			// No HTTP code here (network/timeout); Diagnostics classifies from text.
 			return Result::error( $response->get_error_message(), [ 'mailer' => $this->slug() ] );
 		}
 
-		$code = (int) wp_remote_retrieve_response_code( $response );
-		$raw  = (string) wp_remote_retrieve_body( $response );
+		$code    = (int) wp_remote_retrieve_response_code( $response );
+		$raw     = (string) wp_remote_retrieve_body( $response );
+		$headers = wp_remote_retrieve_headers( $response );
 
-		return $this->interpret( $code, $raw );
+		$result     = $this->interpret( $code, $raw );
+		$message_id = $result->ok ? $this->extract_message_id( $code, $raw, $this->headers_to_array( $headers ) ) : null;
+
+		return $result->with_transport( $code, $message_id );
+	}
+
+	/**
+	 * Best-effort provider message id from a successful response. The default reads
+	 * the common JSON body shapes and the standard `X-Message-Id` header; providers
+	 * whose id lives elsewhere override this. Returns null when none is found.
+	 *
+	 * @param array<string, string> $headers Lower-cased header name => value.
+	 */
+	protected function extract_message_id( int $code, string $raw, array $headers ): ?string {
+		unset( $code );
+
+		foreach ( [ 'x-message-id', 'x-message-uuid', 'message-id' ] as $name ) {
+			if ( isset( $headers[ $name ] ) && '' !== $headers[ $name ] ) {
+				return $headers[ $name ];
+			}
+		}
+
+		$data = json_decode( $raw, true );
+		if ( is_array( $data ) ) {
+			foreach ( [ 'message_id', 'messageId', 'MessageId', 'MessageID', 'id' ] as $key ) {
+				if ( isset( $data[ $key ] ) && is_scalar( $data[ $key ] ) ) {
+					return (string) $data[ $key ];
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Normalise the WP HTTP headers value (a CaseInsensitiveDictionary, array, or
+	 * string depending on WP/transport) to a lower-cased string map.
+	 *
+	 * @param mixed $headers
+	 * @return array<string, string>
+	 */
+	private function headers_to_array( mixed $headers ): array {
+		if ( is_object( $headers ) && method_exists( $headers, 'getAll' ) ) {
+			$all     = $headers->getAll();
+			$headers = is_array( $all ) ? $all : [];
+		}
+		if ( ! is_array( $headers ) ) {
+			return [];
+		}
+
+		$out = [];
+		foreach ( $headers as $name => $value ) {
+			if ( is_array( $value ) ) {
+				$value = reset( $value );
+			}
+			if ( is_scalar( $value ) ) {
+				$out[ strtolower( (string) $name ) ] = (string) $value;
+			}
+		}
+
+		return $out;
 	}
 
 	/**

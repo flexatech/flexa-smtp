@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Flexa\Smtp\Mailer\Providers;
 
-use Flexa\Smtp\Mailer\Contracts\ConfiguresPhpMailer;
+use Flexa\Smtp\Mailer\Contracts\PhpMailerConfigurator;
 use Flexa\Smtp\Mailer\Contracts\MailerInterface;
 use Flexa\Smtp\Mailer\Contracts\ProvidesCredentialSchema;
 use Flexa\Smtp\Mailer\Message;
@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  * regional SMTP host and lets PHPMailer do the send, exactly like the generic
  * SMTP mailer. {@see send()} is therefore never reached through the manager.
  */
-final class IonosMailer implements MailerInterface, ConfiguresPhpMailer, ProvidesCredentialSchema {
+final class IonosMailer implements MailerInterface, PhpMailerConfigurator, ProvidesCredentialSchema {
 	private const SLUG = 'ionos';
 
 	/**

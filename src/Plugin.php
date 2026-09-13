@@ -47,6 +47,14 @@ final class Plugin {
 			Logging\Retention::instance()->register();
 		}
 
+		if ( class_exists( Queue\Queue::class ) ) {
+			Queue\Queue::instance()->register();
+		}
+
+		if ( class_exists( Health\HealthChecker::class ) ) {
+			Health\HealthChecker::instance()->register();
+		}
+
 		if ( class_exists( Tracking\Tracker::class ) ) {
 			Tracking\Tracker::instance()->register();
 		}

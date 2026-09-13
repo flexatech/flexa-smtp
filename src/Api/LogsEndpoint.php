@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Flexa\Smtp\Api;
 
+use Flexa\Smtp\Diagnostics\Diagnosis;
+use Flexa\Smtp\Diagnostics\Diagnostics;
 use Flexa\Smtp\Domain\ClickEventRepository;
 use Flexa\Smtp\Domain\EmailLog;
 use Flexa\Smtp\Domain\EmailLogRepository;
@@ -116,6 +118,10 @@ final class LogsEndpoint extends Endpoint {
 			( new ClickEventRepository() )->for_log( $id )
 		);
 
+		if ( EmailLog::STATUS_FAILED === $log->status ) {
+			$data['diagnosis'] = self::diagnose( $log )->to_array();
+		}
+
 		return new WP_REST_Response( $data );
 	}
 
@@ -146,6 +152,7 @@ final class LogsEndpoint extends Endpoint {
 		header( 'Content-Type: text/csv; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="flexa-smtp-logs-' . gmdate( 'Ymd-His' ) . '.csv"' );
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- streaming a CSV download to the PHP output stream; WP_Filesystem cannot write to php://output.
 		$out = fopen( 'php://output', 'w' );
 		if ( false !== $out ) {
 			fputcsv( $out, [ 'ID', 'Date', 'Status', 'Mailer', 'From', 'To', 'Subject', 'Source', 'Error' ] );
@@ -170,6 +177,7 @@ final class LogsEndpoint extends Endpoint {
 				);
 			}
 
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- closing the php://output stream handle opened above.
 			fclose( $out );
 		}
 
@@ -177,52 +185,73 @@ final class LogsEndpoint extends Endpoint {
 	}
 
 	/**
+	 * Rebuild the human diagnosis for a failed log. Uses the stored category (set
+	 * authoritatively at send time) for the label, and re-derives retryability from
+	 * the response code + error text so the read path needs no extra stored column.
+	 */
+	private static function diagnose( EmailLog $log ): Diagnosis {
+		$code  = ctype_digit( $log->response_code ) ? (int) $log->response_code : null;
+		$fresh = Diagnostics::classify( $code, $log->reason_error, $log->mailer );
+
+		if ( '' !== $log->error_category ) {
+			return Diagnostics::for_category( $log->error_category, $code, $log->reason_error, $fresh->retryable );
+		}
+
+		return $fresh;
+	}
+
+	/**
 	 * @return array<string, array<string, mixed>>
 	 */
 	private function list_args(): array {
 		return [
-			'status'    => [
+			'status'         => [
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_text_field',
 			],
-			'mailer'    => [
+			'error_category' => [
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_key',
 			],
-			'search'    => [
-				'type'              => 'string',
-				'required'          => false,
-				'sanitize_callback' => 'sanitize_text_field',
-			],
-			'date_from' => [
-				'type'              => 'string',
-				'required'          => false,
-				'sanitize_callback' => 'sanitize_text_field',
-			],
-			'date_to'   => [
-				'type'              => 'string',
-				'required'          => false,
-				'sanitize_callback' => 'sanitize_text_field',
-			],
-			'orderby'   => [
+			'mailer'         => [
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_key',
 			],
-			'order'     => [
+			'search'         => [
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'date_from'      => [
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'date_to'        => [
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'orderby'        => [
 				'type'              => 'string',
 				'required'          => false,
 				'sanitize_callback' => 'sanitize_key',
 			],
-			'page'      => [
+			'order'          => [
+				'type'              => 'string',
+				'required'          => false,
+				'sanitize_callback' => 'sanitize_key',
+			],
+			'page'           => [
 				'type'              => 'integer',
 				'required'          => false,
 				'default'           => 1,
 				'sanitize_callback' => 'absint',
 			],
-			'per_page'  => [
+			'per_page'       => [
 				'type'              => 'integer',
 				'required'          => false,
 				'default'           => 20,
@@ -236,12 +265,13 @@ final class LogsEndpoint extends Endpoint {
 	 */
 	private function filters( WP_REST_Request $request ): array {
 		$filters = [
-			'mailer'    => (string) $request->get_param( 'mailer' ),
-			'search'    => (string) $request->get_param( 'search' ),
-			'date_from' => (string) $request->get_param( 'date_from' ),
-			'date_to'   => (string) $request->get_param( 'date_to' ),
-			'orderby'   => (string) $request->get_param( 'orderby' ),
-			'order'     => (string) $request->get_param( 'order' ),
+			'mailer'         => (string) $request->get_param( 'mailer' ),
+			'error_category' => (string) $request->get_param( 'error_category' ),
+			'search'         => (string) $request->get_param( 'search' ),
+			'date_from'      => (string) $request->get_param( 'date_from' ),
+			'date_to'        => (string) $request->get_param( 'date_to' ),
+			'orderby'        => (string) $request->get_param( 'orderby' ),
+			'order'          => (string) $request->get_param( 'order' ),
 		];
 
 		$status = $request->get_param( 'status' );

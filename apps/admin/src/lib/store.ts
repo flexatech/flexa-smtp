@@ -11,9 +11,14 @@ interface UiState {
     /** Which settings pane is open. Persisted so a reload lands on the same
      *  tab; everything else here is transient. */
     activeSection: string;
+    /** Failure category the Logs tab is filtered by. Set from the Overview so a
+     *  "12 auth failures" figure can deep-link into the matching log rows.
+     *  Transient (never persisted). */
+    logCategory: string;
     /** Transient (never persisted): the active toast, or null. */
     toast: ToastState | null;
     setActiveSection: (id: string) => void;
+    setLogCategory: (category: string) => void;
     showToast: (message: string, tone?: ToastState["tone"]) => void;
     dismissToast: () => void;
 }
@@ -30,9 +35,11 @@ const persistOptions: PersistOptions<
 export const useUiStore = create<UiState>()(
     persist(
         (set) => ({
-            activeSection: "mailer",
+            activeSection: "overview",
+            logCategory: "",
             toast: null,
             setActiveSection: (activeSection) => set({ activeSection }),
+            setLogCategory: (logCategory) => set({ logCategory }),
             showToast: (message, tone = "success") =>
                 set({ toast: { id: Date.now(), message, tone } }),
             dismissToast: () => set({ toast: null }),

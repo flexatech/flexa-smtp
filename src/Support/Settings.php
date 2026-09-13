@@ -42,6 +42,8 @@ final class Settings {
 		'enable_click_tracking',
 		'enable_weekly_report',
 		'enable_monthly_report',
+		'enable_queue',
+		'enable_retry',
 	];
 
 	/**
@@ -60,6 +62,7 @@ final class Settings {
 	 */
 	private const INT_KEYS = [
 		'log_retention_days',
+		'queue_max_attempts',
 	];
 
 	/**
@@ -119,6 +122,11 @@ final class Settings {
 		// Logging is on by default with a 30-day retention window.
 		$defaults['enable_email_log']   = true;
 		$defaults['log_retention_days'] = 30;
+		// Queue + retry (DL4) ship off: the synchronous send path is preserved so
+		// wp_mail()'s return value keeps its usual meaning until an admin opts in.
+		$defaults['enable_queue']       = false;
+		$defaults['enable_retry']       = false;
+		$defaults['queue_max_attempts'] = 3;
 
 		return $defaults;
 	}
@@ -398,7 +406,7 @@ final class Settings {
 	}
 
 	/**
-	 * @param array{type:string, secret?:bool, enum?:list<string>} $def
+	 * @param array{type:string, secret?:bool, enum?:list<string>, open?:bool} $def
 	 */
 	private static function coerce_field( mixed $value, array $def ): mixed {
 		switch ( $def['type'] ) {
@@ -409,6 +417,12 @@ final class Settings {
 			case 'enum':
 				$allowed = $def['enum'] ?? [];
 				$str     = is_string( $value ) ? $value : '';
+				// Open enums (editable combobox) treat the list as suggestions only and
+				// accept any typed value; strict enums clamp to the allowed list.
+				if ( ! empty( $def['open'] ) ) {
+					$str = sanitize_text_field( $str );
+					return '' !== $str ? $str : ( $allowed[0] ?? '' );
+				}
 				return in_array( $str, $allowed, true ) ? $str : ( $allowed[0] ?? '' );
 			case 'string':
 			default:

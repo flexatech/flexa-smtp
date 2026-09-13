@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Flexa\Smtp\Mailer\Providers;
 
-use Flexa\Smtp\Mailer\Contracts\ConfiguresPhpMailer;
+use Flexa\Smtp\Mailer\Contracts\PhpMailerConfigurator;
 use Flexa\Smtp\Mailer\Contracts\MailerInterface;
 use Flexa\Smtp\Mailer\Message;
 use Flexa\Smtp\Mailer\Result;
@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * and lets PHPMailer perform the SMTP conversation, so {@see send()} is never
  * reached through the manager.
  */
-final class SmtpMailer implements MailerInterface, ConfiguresPhpMailer {
+final class SmtpMailer implements MailerInterface, PhpMailerConfigurator {
 	public function slug(): string {
 		return 'smtp';
 	}

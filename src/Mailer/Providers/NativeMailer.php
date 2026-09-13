@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Flexa\Smtp\Mailer\Providers;
 
-use Flexa\Smtp\Mailer\Contracts\ConfiguresPhpMailer;
+use Flexa\Smtp\Mailer\Contracts\PhpMailerConfigurator;
 use Flexa\Smtp\Mailer\Contracts\MailerInterface;
 use Flexa\Smtp\Mailer\Message;
 use Flexa\Smtp\Mailer\Result;
@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * "configured" — it needs no credentials. Sending is done by PHPMailer, so
  * {@see send()} is never reached through the manager.
  */
-final class NativeMailer implements MailerInterface, ConfiguresPhpMailer {
+final class NativeMailer implements MailerInterface, PhpMailerConfigurator {
 	public function slug(): string {
 		return 'mail';
 	}

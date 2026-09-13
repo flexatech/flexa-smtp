@@ -4,6 +4,7 @@ import {
     KeyRound,
     Link2,
     Mailbox,
+    Send,
     Server,
     ShieldCheck,
     User,
@@ -14,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
-import { __ } from "@/lib/i18n";
+import { __, sprintf } from "@/lib/i18n";
 import { useUiStore } from "@/lib/store";
 import { getPluginGlobal, type FieldDef } from "@/lib/wp";
 import { ROW_DIVIDER, SettingRow, ToggleRow } from "../SettingRow";
@@ -57,6 +58,31 @@ function CredentialField({
                     checked={Boolean(value)}
                     onCheckedChange={onChange}
                 />
+            </SettingRow>
+        );
+    }
+
+    if (def.type === "enum" && def.open) {
+        // Editable combobox: known values are datalist suggestions, but any typed
+        // value is accepted (e.g. a new AWS region the plugin doesn't ship yet).
+        const listId = `${id}-list`;
+        return (
+            <SettingRow icon={Server} title={label} htmlFor={id}>
+                <Input
+                    id={id}
+                    type="text"
+                    value={String(value ?? "")}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder={def.enum?.[0] ?? ""}
+                    list={listId}
+                    className="fs:w-64"
+                    autoComplete="off"
+                />
+                <datalist id={listId}>
+                    {(def.enum ?? []).map((v) => (
+                        <option key={v} value={v} />
+                    ))}
+                </datalist>
             </SettingRow>
         );
     }
@@ -177,6 +203,105 @@ function OAuthConnect({ slug }: { slug: string }) {
                 )}
             </div>
         </SettingRow>
+    );
+}
+
+type TestResult =
+    | { ok: true; mailer: string }
+    | { ok: false; error: string };
+
+function SendTestEmail() {
+    const showToast = useUiStore((s) => s.showToast);
+    const [email, setEmail] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState<TestResult | null>(null);
+
+    const send = async () => {
+        const to = email.trim();
+        if (to === "") {
+            showToast(__("Enter a recipient email address first."), "error");
+            return;
+        }
+        setBusy(true);
+        setResult(null);
+        try {
+            // The endpoint returns HTTP 200 with { ok: false, error } on a send
+            // failure, so inspect the payload rather than trusting the status.
+            const res = await api.post<TestResult>("test-mail", {
+                to,
+                html: true,
+            });
+            setResult(res);
+            showToast(
+                res.ok ? __("Test email sent.") : __("Test email failed."),
+                res.ok ? "success" : "error",
+            );
+        } catch (e) {
+            const message = (e as Error).message;
+            setResult({ ok: false, error: message });
+            showToast(__("Test email failed: ") + message, "error");
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <div className="fs:border-t fs:border-slate-100">
+            <div className="fs:bg-slate-50/60 fs:px-5 fs:py-2 fs:text-xs fs:font-semibold fs:uppercase fs:tracking-wide fs:text-slate-500">
+                {__("Send a test email")}
+            </div>
+            <SettingRow
+                icon={Send}
+                title={__("Test recipient")}
+                description={__(
+                    "Sends through your saved mailer settings. Save any changes first.",
+                )}
+                htmlFor="fs-test-email"
+            >
+                <div className="fs:flex fs:items-center fs:gap-2">
+                    <Input
+                        id="fs-test-email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" && !busy) {
+                                send();
+                            }
+                        }}
+                        placeholder="you@example.com"
+                        className="fs:w-56"
+                        autoComplete="off"
+                    />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={send}
+                        disabled={busy}
+                        className="fs:gap-2"
+                    >
+                        <Send className="fs:h-4 fs:w-4" aria-hidden />
+                        {busy ? __("Sending…") : __("Send test")}
+                    </Button>
+                </div>
+            </SettingRow>
+            {result && (
+                <div className="fs:px-5 fs:pb-4">
+                    {result.ok ? (
+                        <p className="fs:rounded-md fs:bg-emerald-50 fs:px-3 fs:py-2 fs:text-xs fs:text-emerald-700">
+                            {sprintf(
+                                __("Sent through %s. Check the inbox."),
+                                mailerLabel(result.mailer),
+                            )}
+                        </p>
+                    ) : (
+                        <p className="fs:rounded-md fs:bg-red-50 fs:px-3 fs:py-2 fs:text-xs fs:text-red-700">
+                            {result.error}
+                        </p>
+                    )}
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -318,6 +443,8 @@ export function MailerTab({ form, setField, setMailerField }: TabProps) {
                     </div>
                 )}
             </div>
+
+            <SendTestEmail />
         </div>
     );
 }

@@ -67,3 +67,28 @@ export function fieldLabel(key: string): string {
         key.charAt(0).toUpperCase() + key.slice(1).replace(/[_-]/g, " ")
     );
 }
+
+/**
+ * Human labels for failure categories (matches Diagnostics::categories()).
+ * Kept plain so `wp i18n make-pot` picks up the literal strings.
+ */
+export const CATEGORY_LABELS: Record<string, string> = {
+    auth: "Authentication",
+    connection: "Connection",
+    timeout: "Timeout",
+    tls: "TLS / SSL",
+    dns: "DNS",
+    rate_limit: "Rate limit",
+    provider_rejection: "Provider rejection",
+    invalid_recipient: "Invalid recipient",
+    configuration: "Configuration",
+    server: "Provider server",
+    unknown: "Unknown",
+};
+
+export function categoryLabel(key: string): string {
+    return (
+        CATEGORY_LABELS[key] ??
+        key.charAt(0).toUpperCase() + key.slice(1).replace(/[_-]/g, " ")
+    );
+}

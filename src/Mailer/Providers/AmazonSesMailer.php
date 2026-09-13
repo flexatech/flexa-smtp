@@ -27,6 +27,10 @@ final class AmazonSesMailer extends AbstractApiMailer {
 			],
 			'region'     => [
 				'type' => 'enum',
+				// Editable combobox: the list below is quick-pick suggestions, but any
+				// region the user types is accepted, so a new AWS region works without a
+				// plugin update. {@see coerce_field()} keeps open enums as free text.
+				'open' => true,
 				'enum' => [
 					'us-east-1',
 					'us-east-2',
@@ -51,9 +55,21 @@ final class AmazonSesMailer extends AbstractApiMailer {
 	}
 
 	protected function endpoint(): string {
-		$region = $this->cred( 'region', 'us-east-1' );
+		// phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Amazon SES REST API endpoint for sending mail, not an offloaded asset.
+		return sprintf( 'https://email.%s.amazonaws.com/v2/email/outbound-emails', $this->region() );
+	}
 
-		return sprintf( 'https://email.%s.amazonaws.com/v2/email/outbound-emails', $region );
+	/**
+	 * The configured AWS region, normalized to the [a-z0-9-] shape a region code
+	 * uses. Since the region is a free-text field it is stripped defensively here
+	 * so a stray value cannot corrupt the endpoint host or the SigV4 credential
+	 * scope; falls back to us-east-1 when empty.
+	 */
+	private function region(): string {
+		$region = strtolower( (string) $this->cred( 'region', 'us-east-1' ) );
+		$region = (string) preg_replace( '/[^a-z0-9-]/', '', $region );
+
+		return '' !== $region ? $region : 'us-east-1';
 	}
 
 	protected function auth_headers(): array {
@@ -132,7 +148,7 @@ final class AmazonSesMailer extends AbstractApiMailer {
 		$headers = AwsV4Signer::sign(
 			'POST',
 			$url,
-			$this->cred( 'region', 'us-east-1' ),
+			$this->region(),
 			'ses',
 			$this->cred( 'access_key' ),
 			$this->cred( 'secret_key' ),

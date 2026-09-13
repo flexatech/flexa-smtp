@@ -9,6 +9,8 @@ export interface FieldDef {
     type: "string" | "int" | "bool" | "enum";
     secret?: boolean;
     enum?: string[];
+    /** Enum rendered as an editable combobox: `enum` is suggestions, any typed value is accepted. */
+    open?: boolean;
 }
 
 /** slug => (field => definition), from Settings::mailer_schema(). */

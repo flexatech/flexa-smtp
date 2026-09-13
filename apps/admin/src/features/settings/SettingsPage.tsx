@@ -2,10 +2,12 @@ import {
     BarChart3,
     ClipboardList,
     DownloadCloud,
+    LayoutDashboard,
     Mail,
     Mailbox,
     MousePointerClick,
     Save,
+    Send,
     ShieldAlert,
     SlidersHorizontal,
 } from "lucide-react";
@@ -14,10 +16,12 @@ import { Button } from "@/components/ui/button";
 import { __ } from "@/lib/i18n";
 import { useUiStore } from "@/lib/store";
 import { getPluginGlobal } from "@/lib/wp";
+import { OverviewTab } from "@/features/overview/OverviewTab";
 import { DangerZone } from "./DangerZone";
 import { NavItem, PaneHeader, type SectionMeta } from "./SettingRow";
 import { MailerTab } from "./tabs/MailerTab";
 import { LogsTab } from "./tabs/LogsTab";
+import { QueueTab } from "./tabs/QueueTab";
 import { TrackingTab } from "./tabs/TrackingTab";
 import { ReportsTab } from "./tabs/ReportsTab";
 import { ImportTab } from "./tabs/ImportTab";
@@ -45,6 +49,9 @@ const SCALAR_KEYS: Array<keyof SettingsData> = [
     "enable_weekly_report",
     "enable_monthly_report",
     "report_recipients",
+    "enable_queue",
+    "enable_retry",
+    "queue_max_attempts",
 ];
 
 function diffSettings(
@@ -74,12 +81,28 @@ function diffSettings(
 
 const SECTIONS: SectionMeta[] = [
     {
+        id: "overview",
+        title: __("Overview"),
+        subtitle: __("Delivery at a glance"),
+        icon: LayoutDashboard,
+        paneTitle: __("Overview"),
+        paneSubtitle: __("The three questions that tell you if email is working."),
+    },
+    {
         id: "mailer",
         title: __("Mailer"),
         subtitle: __("Sender and delivery service"),
         icon: Mailbox,
         paneTitle: __("Mailer Settings"),
         paneSubtitle: __("Choose how your site sends email and who it's from."),
+    },
+    {
+        id: "queue",
+        title: __("Delivery Queue"),
+        subtitle: __("Background send and retry"),
+        icon: Send,
+        paneTitle: __("Delivery Queue"),
+        paneSubtitle: __("Send email in the background and retry temporary failures."),
     },
     {
         id: "logs",
@@ -200,7 +223,8 @@ export function SettingsPage() {
     const activeSection =
         SECTIONS.find((s) => s.id === active) ?? SECTIONS[0];
     const tabProps = { form, setField, setMailerField };
-    const showSave = active !== "danger" && active !== "import";
+    const showSave =
+        active !== "overview" && active !== "danger" && active !== "import";
 
     return (
         <div className="fs:min-h-full fs:bg-slate-50">
@@ -270,10 +294,12 @@ export function SettingsPage() {
                     ))}
                 </aside>
 
-                <main className="fs:flex-1">
+                <main className="fs:min-w-0 fs:flex-1">
                     <div className="fs:overflow-hidden fs:rounded-xl fs:border fs:border-slate-200 fs:bg-white fs:shadow-sm">
                         <PaneHeader section={activeSection} />
+                        {active === "overview" && <OverviewTab />}
                         {active === "mailer" && <MailerTab {...tabProps} />}
+                        {active === "queue" && <QueueTab {...tabProps} />}
                         {active === "logs" && <LogsTab {...tabProps} />}
                         {active === "tracking" && <TrackingTab {...tabProps} />}
                         {active === "reports" && <ReportsTab {...tabProps} />}

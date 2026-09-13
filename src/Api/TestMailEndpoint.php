@@ -82,7 +82,11 @@ final class TestMailEndpoint extends Endpoint {
 			$captured = $error->get_error_message();
 		};
 		add_action( 'wp_mail_failed', $listener );
+		// Send synchronously even when the queue is enabled, so the admin gets an
+		// immediate pass/fail instead of a "queued" result they cannot verify.
+		add_filter( 'flexa_smtp.mail.bypass_queue', '__return_true' );
 		$sent = wp_mail( $to, $subject, $body, $headers );
+		remove_filter( 'flexa_smtp.mail.bypass_queue', '__return_true' );
 		remove_action( 'wp_mail_failed', $listener );
 
 		if ( $sent ) {
