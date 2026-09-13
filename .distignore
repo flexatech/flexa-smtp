@@ -10,7 +10,10 @@
 /.DS_Store
 /node_modules
 /vendor
-/apps/admin/node_modules
+# The admin app under apps/ is TypeScript/CSS source only; the production build
+# is compiled into assets/dist/, so nothing from apps/ is needed at runtime. The
+# readable source is linked from readme.txt (public repo) for Plugin Check 21.
+/apps
 /tests
 /docs
 /release.sh
@@ -23,8 +26,6 @@
 /package.json
 /pnpm-workspace.yaml
 /tsconfig.json
-/apps/admin/tsconfig.json
-/apps/admin/vite.config.ts
 /phpcs.xml.dist
 /phpstan.neon
 /phpstan-bootstrap.php
@@ -38,6 +39,9 @@
 # also keeps stray dev notes (plan, session logs) out of the zip so Plugin
 # Check's root-markdown scan stays clean.
 *.md
+# No compile source in the zip (the built bundle lives in assets/dist/).
+*.ts
+*.tsx
 # Regeneratable tooling caches (hidden files Plugin Check rejects).
 .phpunit.result.cache
 .phpcs.cache

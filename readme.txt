@@ -90,6 +90,18 @@ OAuth mailers (authorization + send):
 2. Activate the plugin through the **Plugins** menu in WordPress.
 3. Go to **Flexa SMTP** in the admin menu, choose your mailer, enter its credentials (or connect via OAuth), and send a test email.
 
+== Source code for compiled JavaScript and CSS ==
+
+The admin app ships as a compiled bundle in `assets/dist/`. The human-readable
+TypeScript and CSS source, together with its build config, lives in the public
+repository at https://github.com/flexatech/flexa-smtp/ (under `apps/admin/`) and
+is built with pnpm + Vite from the plugin root:
+
+1. `pnpm install`
+2. `pnpm run build`   (or `pnpm run dev` for a watched dev build)
+
+This runs a type check and writes the bundle to `assets/dist/`.
+
 == Frequently Asked Questions ==
 
 = Will sending email slow down my site? =
